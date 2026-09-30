@@ -32,7 +32,7 @@ constexpr int min_pulse_width = 5;                        // us minimum pulse wi
 // LIMIT SWITCH PINS
 
 // Reservoir: 0 , Build: 1 , Recoater: 2
-constexpr int switch_pins[3] = {1 , 7 , 20}; // 1 7 20
+constexpr int switch_pins[3] = {4 , 5 , 6}; // 1 7 20
 constexpr bool normally_open[3] = {false , false , true};
 constexpr float homing_fast_speed_fracs[3] = {-1 , 1 , -.2};
 constexpr float homing_slow_speed_fracs[3] = {-.1 , .1 , -.1};
