@@ -35,4 +35,4 @@ def return_Projector(spi_max_speed):
 
     except Exception as e:
         GPIO.cleanup()
-        return Result(value = None , state = State.ERROR , message = "Can't open projector. " + "Error was: " + e)
+        return Result(value = None , state = State.ERROR , message = "Can't open projector. " + "Error was: " + str(e))

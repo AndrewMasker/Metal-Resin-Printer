@@ -12,6 +12,7 @@ dependencies = [
     "smbus",
     "spidev",
     "pillow",
+    "platformdirs",
 ]
 
 [tool.setuptools.packages.find]
