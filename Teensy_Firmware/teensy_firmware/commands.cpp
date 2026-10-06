@@ -3,6 +3,7 @@
 #include "steppers.h"
 #include "heaters.h"
 #include "settings.h"
+#include "dual_serial.h"
 #include <Arduino.h>
 
 static char buffer[32];
@@ -43,7 +44,7 @@ static void handle_Command(char *command)
   {
     int stepper_id = atoi(command + 2);
     float pos = get_Axis_Position(stepper_id);
-    Serial.print("GP"); Serial.print(stepper_id); Serial.print(" "); Serial.println(pos); 
+    Link.print("GP"); Link.print(stepper_id); Link.print(" "); Link.println(pos); 
   }
 
   else if ((command[0] == 'S') & (command[1] == 'P'))
@@ -131,7 +132,7 @@ static void handle_Command(char *command)
   {
     int probe_id = atoi(command + 2);
     float temp = return_Temp(probe_id);
-    Serial.print("GT"); Serial.print(probe_id); Serial.print(" "); Serial.println(temp);
+    Link.print("GT"); Link.print(probe_id); Link.print(" "); Link.println(temp);
   }
 
   else if (command[0] == 'E')
@@ -139,7 +140,7 @@ static void handle_Command(char *command)
     char *space = strchr(command , ' ');
     if (space)
     {
-      Serial.println(space + 1);
+      Link.println(space + 1);
     }
   }
 
@@ -148,9 +149,9 @@ static void handle_Command(char *command)
 
 void poll_For_Commands()
 {
-  while (Serial.available())
+  while (Link.available())
   {
-      char c = Serial.read();
+      char c = Link.read();
       if (c == '\n')
       {
         buffer[length] = 0;

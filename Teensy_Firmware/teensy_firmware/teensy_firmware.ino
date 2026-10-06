@@ -3,10 +3,11 @@
 #include "steppers.h"
 #include "limit_switches.h"
 #include "heaters.h"
+#include "dual_serial.h"
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(9600);
+  Link.begin(9600);
   steppers_Init();
   switches_Init();
   heaters_Init();

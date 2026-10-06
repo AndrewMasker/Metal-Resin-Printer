@@ -3,6 +3,7 @@
 #include "config.h"
 #include "settings.h"
 #include "limit_switches.h"
+#include "dual_serial.h"
 #include <AccelStepper.h>
 #include <AccelStepperWithDistance.h>
 #include <Arduino.h>
@@ -128,7 +129,7 @@ static void home_One_Stepper_Update(int id)
         homing_phase[id] = NIL;
         axes[id].setMaxSpeed(max_speeds_steps[id]);
         axes[id].setCurrentPosition(0);
-        Serial.print("H"); Serial.println(id);
+        Link.print("H"); Link.println(id);
         // Serial.print("Axis "); Serial.print(id); Serial.println(" has been homed.");
       }
       else
@@ -161,7 +162,7 @@ void steppers_Update()
       else if (axes[i].distanceToGo() == 0 && is_Moving[i] == true)
       {
         is_Moving[i] = false;
-        Serial.print("M"); Serial.println(i);
+        Link.print("M"); Link.println(i);
       }
       axes[i].run();
     }
