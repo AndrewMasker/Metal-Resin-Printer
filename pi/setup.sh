@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+trap 'echo "FAILED at line $LINENO: $BASH_COMMAND" >&2' ERR
 
 # Must run with sudo
 if [[ $EUID -ne 0 ]]; then
@@ -30,7 +31,7 @@ fi
 echo "Included lmm_printer config.txt into pi config.txt."
 
 # Replace cmdline.text with the modified version
-read -r line < "$CMDLINE"
+read -r line < "$CMDLINE" || true
 new=""
 for arg in $line; do
     while read -r change _ || [[ -n $change ]]; do
