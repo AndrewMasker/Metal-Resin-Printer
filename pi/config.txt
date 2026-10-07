@@ -1,0 +1,36 @@
+# config.txt : pi boot configurations.
+
+# PROJECTOR
+    # SPI0
+dtparam=spi=on
+dtoverlay=spi0-1cs
+    # I2C1
+dtparam-i2c_arm=on
+dtparam=i2c_arm_baudrate=100000
+
+
+# DISPLAY
+dtoverlay=spi1-1cs,cs0_spidev=off
+dtoverlay=mipi-dbi-spi,spi1-0,speed=32000000,write-only
+dtparam=width=240,height=320
+dtparam=reset-gpio=24,dc-gpio=22,backlight-gpio=23
+
+# INPUTS
+dtoverlay=rotary-encoder,pin_a=25,pin_b=26,relative_axis=1
+dtoverlay=gpio-key,gpio=27,active_low=1,gpio_pull=up,keycode=28,label=enc_btn
+
+# TEENSY UART
+enable_uart=1
+dtoverlay=disable-bt
+
+# SPI FREQ
+core_freq=250
+core_freq_min=250
+
+# BOOT PIN STATES
+gpio=5=op,dl        # Proj_ON held off.
+gpio=13,op,dl       # Proj_PRINT held off.
+gpio=25,26,ip,pn    # Disables internal pulldowns for encoder.
+force_eeprom_read=0 # Disables Hat eeprom probe for pin that goes to spare gpio.
+
+

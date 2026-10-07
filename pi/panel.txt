@@ -1,0 +1,21 @@
+command 0x11      # Sleep out, wakes the controller.
+
+delay 120         # Waits 120 ms before doing anything else.
+
+command 0x3A 0x55 # Sets 16 bit / pixel.
+
+command 0x36 0x00 # MADCTL, for switching color order, rotations, and flips.
+                    # MADCTL rules: 
+                    # Arg is the second number.
+                    # Arg = (MY_f * MY) + (MX_f * MX) + (MV_f * MV) + (ML_f * ML) + (BGR_f * BGR) + (MH_f * MH)
+                    # Each XX_f is a bit flag for whether that argument should be used.
+                        # MY  = 0x80 : Flips vertically.
+                        # MX  = 0x40 : Flips horizontally.
+                        # MV  = 0x20 : Swaps rows and columns.
+                        # ML  = 0x10 : Vertial refresh direction.
+                        # BGR = 0x08 : Flips color order.
+                        # MH  = 0x04 : Horizontal refresh direction.
+
+command 0x21      # Inverts the colors.
+
+command 0x29      # Turns on the display.

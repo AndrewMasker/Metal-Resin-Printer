@@ -1,0 +1,4 @@
+spidev.bufsiz=65536
+!console=serial0,*
+!console=ttyAMA0,*
+!console=ttyS0,*
