@@ -19,6 +19,7 @@ CMDLINE="$BOOT/cmdline.txt"
 # One time backups
 cp -n "$CONFIG" "$CONFIG.orig"
 cp -n "$CMDLINE" "$CMDLINE.orig"
+echo "Backups were created or already exist."
 
 # Include the lmm_printer config.txt into the actual config.txt
 INCLUDE_NAME="lmm_printer_config.txt"
@@ -26,6 +27,7 @@ install -m 644 "$DIR/config.txt" "$BOOT/$INCLUDE_NAME"
 if ! grep -qxF "include $INCLUDE_NAME" "$CONFIG"; then
     printf '\n[all]\ninclude %s\n' "$INCLUDE_NAME" >> "$CONFIG"
 fi
+echo "Included lmm_printer config.txt into pi config.txt."
 
 # Replace cmdline.text with the modified version
 read -r line < "$CMDLINE"
@@ -44,6 +46,7 @@ while read -r change _ || [[ -n $change ]]; do
 done < "$DIR/cmdline_change.txt"
 [[ $new == *root=* ]] || { echo "cmdline looks wrong. Not writing: $new" >&2; exit 1; }
 echo "${new# }" > "$CMDLINE"
+echo "cmdline.txt has been replaced with the modified version."
 
 # Display driver install and reload
 BUILD="$(mktemp -d)"
@@ -51,11 +54,13 @@ trap 'rm -rf "$BUILD"' EXIT
 python3 "$DIR/tools/mipi-dbi-cmd" "$BUILD/panel.bin" "$DIR/panel.txt"
 install -m 644 "$BUILD/panel.bin" "/lib/firmware/panel.bin"
 if [[ -d /sys/module/panel_mipi_dbi ]]; then
-    modprobe -r panel_mipi_dbi && modprobe panel_mipi_dbi || echo "Display driver busy, reboot to apply panel.bin" >&2
+    modprobe -r panel_mipi_dbi && modprobe panel_mipi_dbi || echo "DISPLAY DRIVER BUSY, REBBOT TO APPLY panel.bin" >&2
 fi
+echo "Display driver has been installed."
 
 # Commands that must be run to ensure everything works properly
 systemctl disable hciuart 2>/dev/null || true
+echo "Required commands have been run."
 
 # Ensuring apt installed packages are installed
 APT_LIST="$(python3 - "$DIR/../pyproject.toml" <<'PY'
@@ -71,8 +76,12 @@ if (( ${#APT_PCKGS[@]} )); then
     apt-get update
     apt-get install -y "${APT_PCKGS[@]}"
 fi
+echo "APT packages installed."
 
 sudo -u "$SUDO_USER" python3 -m venv --system-site-packages "$DIR/../.venv"
+echo ".venv created."
+
 sudo -u "$SUDO_USER" "$DIR/../.venv/bin/pip" install -e "$DIR/.."
+echo "packages installed from pyproject.toml"
 
 echo "If this is the first install or you updated config.txt or cmdline.txt, you must reboot the pi. Else you can continue."
