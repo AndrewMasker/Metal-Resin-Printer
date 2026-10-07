@@ -1,11 +1,11 @@
 # config.txt : pi boot configurations.
 
 # PROJECTOR
-    # SPI0
+# SPI0
 dtparam=spi=on
 dtoverlay=spi0-1cs
-    # I2C1
-dtparam-i2c_arm=on
+# I2C1
+dtparam=i2c_arm=on
 dtparam=i2c_arm_baudrate=100000
 
 
@@ -28,9 +28,11 @@ core_freq=250
 core_freq_min=250
 
 # BOOT PIN STATES
-gpio=5=op,dl        # Proj_ON held off.
-gpio=13,op,dl       # Proj_PRINT held off.
-gpio=25,26,ip,pn    # Disables internal pulldowns for encoder.
-force_eeprom_read=0 # Disables Hat eeprom probe for pin that goes to spare gpio.
-
-
+# Proj_ON held off.
+gpio=5=op,dl
+# Proj_PRINT held off.
+gpio=13=op,dl
+# Disables internal pulldowns for encoder.
+gpio=25,26=ip,pn
+# Disables Hat eeprom probe for pin that goes to spare gpio.
+force_eeprom_read=0

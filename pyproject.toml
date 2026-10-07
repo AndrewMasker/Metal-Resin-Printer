@@ -15,5 +15,8 @@ dependencies = [
     "platformdirs",
 ]
 
+[tool.lmm_printer]
+apt_pckgs = ["python3-numpy" , "python3-smbus" , "python3-spidev" , "python3-pil"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
