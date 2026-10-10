@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 trap 'echo "FAILED at line $LINENO: $BASH_COMMAND" >&2' ERR
+trap 'rm -f "$RENDERED"' ERR
 
 # Must run with sudo
 if [[ $EUID -ne 0 ]]; then
@@ -10,6 +11,28 @@ fi
 
 # Get the directory of the install.sh script
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Ensuring apt installed packages are installed
+APT_LIST="$(python3 - "$DIR/../pyproject.toml" <<'PY'
+import sys , tomllib
+with open(sys.argv[1] , "rb") as f:
+    data = tomllib.load(f)
+for pckg in data.get("tool" , {}).get("lmm_printer" , {}).get("apt_pckgs" , []):
+    print(pckg)
+PY
+)"
+mapfile -t APT_PCKGS < <(printf '%s' "$APT_LIST")
+if (( ${#APT_PCKGS[@]} )); then
+    apt-get update
+    apt-get install -y "${APT_PCKGS[@]}"
+fi
+echo "APT packages installed."
+
+sudo -u "$SUDO_USER" python3 -m venv --system-site-packages "$DIR/../.venv"
+echo ".venv created."
+
+sudo -u "$SUDO_USER" "$DIR/../.venv/bin/pip" install -e "$DIR/.."
+echo "packages installed from pyproject.toml"
 
 # Define paths to config files
 BOOT=/boot/firmware 
@@ -23,7 +46,7 @@ cp -n "$CMDLINE" "$CMDLINE.orig"
 echo "Backups were created or already exist."
 
 # Render the config.txt based on values in config.yaml
-CFG="$DIR/../config/{$1:-config.yaml}" # Uses the first argument passed as name for config file, else uses config.yaml
+CFG="$DIR/../config/${1:-config.yaml}" # Uses the first argument passed as name for config file, else uses config.yaml
 RENDERED="$(mktemp)"
 python3 - "$CFG" "$DIR/config.txt" > "$RENDERED" <<'PY'
 import re , sys , yaml
@@ -32,12 +55,12 @@ with open(sys.argv[1]) as f:
 
 def lookup(match):
     node = cfg
-    for key in match.group(1).split(".")
+    for key in match.group(1).split("."):
         node = node[key]
     return str(node)
 
 with open(sys.argv[2]) as f:
-    rendered = re.sub(r"\{\{s*([\w.]+)\s*\}\}" , lookup , f.read())
+    rendered = re.sub(r"\{\{\s*([\w.]+)\s*\}\}" , lookup , f.read())
     print(rendered , end = "")
 PY
 echo "Rendered config.txt"
@@ -45,7 +68,6 @@ echo "Rendered config.txt"
 # Include the lmm_printer config.txt into the actual config.txt
 INCLUDE_NAME="lmm_printer_config.txt"
 install -m 644 "$RENDERED" "$BOOT/$INCLUDE_NAME"
-rm -f "$RENDERED"
 if ! grep -qxF "include $INCLUDE_NAME" "$CONFIG"; then
     printf '\n[all]\ninclude %s\n' "$INCLUDE_NAME" >> "$CONFIG"
 fi
@@ -83,27 +105,5 @@ echo "Display driver has been installed."
 # Commands that must be run to ensure everything works properly
 systemctl disable hciuart 2>/dev/null || true
 echo "Required commands have been run."
-
-# Ensuring apt installed packages are installed
-APT_LIST="$(python3 - "$DIR/../pyproject.toml" <<'PY'
-import sys , tomllib
-with open(sys.argv[1] , "rb") as f:
-    data = tomllib.load(f)
-for pckg in data.get("tool" , {}).get("lmm_printer" , {}).get("apt_pckgs" , []):
-    print(pckg)
-PY
-)"
-mapfile -t APT_PCKGS < <(printf '%s' "$APT_LIST")
-if (( ${#APT_PCKGS[@]} )); then
-    apt-get update
-    apt-get install -y "${APT_PCKGS[@]}"
-fi
-echo "APT packages installed."
-
-sudo -u "$SUDO_USER" python3 -m venv --system-site-packages "$DIR/../.venv"
-echo ".venv created."
-
-sudo -u "$SUDO_USER" "$DIR/../.venv/bin/pip" install -e "$DIR/.."
-echo "packages installed from pyproject.toml"
 
 echo "If this is the first install or you updated config.txt or cmdline.txt, you must reboot the pi. Else you can continue."
