@@ -3,11 +3,12 @@ import serial.tools.list_ports
 from lmm_printer.core.types import Result , State
 from lmm_printer.teensy.teensy import Teensy
 
-def find_Teensy_Port(teensy_vid , enable_fallback):
+def find_Teensy_Port_Fallback(teensy_vid):
     for port in serial.tools.list_ports.comports():
         if port.vid == teensy_vid:
             return port.device
-        if enable_fallback and port.description and "Teensy" in port.description:
+    for port in serial.tools.list_ports.comports():
+        if port.description and "Teensy" in port.description:
             return port.device
     return None
 
@@ -20,11 +21,7 @@ def is_Teensy_Listening(ser):
     line = ' '.join(line.split())
     return line == "hello"
 
-def return_Teensy_Serial(teensy_vid , baudrate , timeout , enable_fallback):
-    port = find_Teensy_Port(teensy_vid , False)
-    if port is None:
-        return Result(value = None , state = State.ERROR , message = "No Teensy port found.")
-
+def teensy_Handshake(port , baudrate , timeout):
     try:
         ser = open_Serial(port , baudrate , timeout)   
     except Exception as e:
@@ -34,6 +31,21 @@ def return_Teensy_Serial(teensy_vid , baudrate , timeout , enable_fallback):
         return Result(value = Teensy(ser) , state = State.SUCCESS , message = "Teensy connection successful.")
     else:
         return Result(value = None , state = State.ERROR , message = "Teensy not listening.")
+
+def return_Teensy_Serial(teensy_vid , baudrate , timeout , enable_fallback):
+    port = "/dev/serial0"
+    handshake_result = teensy_Handshake(port , baudrate , timeout)
+    if not enable_fallback or handshake_result.state == State.SUCCESS:
+        return handshake_result
+    else:
+        port = find_Teensy_Port_Fallback(teensy_vid)
+        if port is None:
+            return Result(value = None , state = State.ERROR , message = "No Teensy port found on fallback." + " Error causing fallback was: " + handshake_result.message)
+        fallback_handshake_result = teensy_Handshake(port , baudrate , timeout)
+        fallback_handshake_result.message = "On fallback: " + fallback_handshake_result.message + " Error causing fallback was: " + handshake_result.message
+        return fallback_handshake_result
+
+
 
 
 
