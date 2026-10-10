@@ -30,12 +30,14 @@ def teensy_Handshake(port , baudrate , timeout):
     if is_Teensy_Listening(ser):
         return Result(value = Teensy(ser) , state = State.SUCCESS , message = "Teensy connection successful.")
     else:
+        ser.close()
         return Result(value = None , state = State.ERROR , message = "Teensy not listening.")
 
 def return_Teensy_Serial(teensy_vid , baudrate , timeout , enable_fallback):
     port = "/dev/serial0"
     handshake_result = teensy_Handshake(port , baudrate , timeout)
     if not enable_fallback or handshake_result.state == State.SUCCESS:
+        handshake_result.value.ser.reset_input_buffer()
         return handshake_result
     else:
         port = find_Teensy_Port_Fallback(teensy_vid)
