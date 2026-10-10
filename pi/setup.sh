@@ -10,7 +10,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 : "${SUDO_USER:?Even if you are root you must run with sudo.}"
 
-# Get the directory of the install.sh script
+# Get the directory of the setup.sh script
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Ensuring apt installed packages are installed
@@ -36,11 +36,11 @@ sudo -u "$SUDO_USER" "$DIR/../.venv/bin/pip" install -e "$DIR/.."
 echo "packages installed from pyproject.toml"
 
 # Define paths to config files
-BOOT=/boot/firmware 
+BOOT=/boot/firmware
 [[ -d $BOOT ]] || BOOT=/boot
 CONFIG="$BOOT/config.txt"
 CMDLINE="$BOOT/cmdline.txt"
- 
+
 # One time backups
 cp -n "$CONFIG" "$CONFIG.orig"
 cp -n "$CMDLINE" "$CMDLINE.orig"
