@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 trap 'echo "FAILED at line $LINENO: $BASH_COMMAND" >&2' ERR
-trap 'rm -f "$RENDERED"' ERR
+trap 'rm -f "${RENDERED:-}"; rm -rf "${BUILD:-}"' EXIT
 
 # Must run with sudo
 if [[ $EUID -ne 0 ]]; then
     echo "run with sudo" >&2
     exit 1
 fi
+: "${SUDO_USER:?Even if you are root you must run with sudo.}"
 
 # Get the directory of the install.sh script
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -94,7 +95,6 @@ echo "cmdline.txt has been replaced with the modified version."
 
 # Display driver install and reload
 BUILD="$(mktemp -d)"
-trap 'rm -rf "$BUILD"' EXIT
 python3 "$DIR/tools/mipi-dbi-cmd" "$BUILD/panel.bin" "$DIR/panel.txt"
 install -m 644 "$BUILD/panel.bin" "/lib/firmware/panel.bin"
 if [[ -d /sys/module/panel_mipi_dbi ]]; then
