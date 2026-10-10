@@ -17,8 +17,8 @@ def open_Serial(port , baudrate , timeout):
 
 def is_Teensy_Listening(ser):
     ser.reset_input_buffer()
-    ser.write(b"E hello\n")
-    line = ser.readline().decode("utf-8")
+    ser.write(b"\nE hello\n")
+    line = ser.readline().decode("utf-8" , errors = "ignore")
     line = ' '.join(line.split())
     return line == "hello"
 
