@@ -7,15 +7,12 @@ import numpy as np
 
 from lmm_printer.vendored.UV_projector.img_convert import image_to_arr
 
-class DLPC1438(DLPC1438_orig):
-    HOST_IRQ = 16
-
 class Mode(enum.IntEnum):
     STANDBY = 0xFF,
     EXTERNALPRINT = 0x06,
     TESTPATTERN = 0x01
     
-class DLPC1438_orig:
+class DLPC1438:
     """
     Representation of the DLPC1438 DMD controller. Communication between the user board (raspberry
     pi) and the DLPC1438+FPGA are handled through this class.
@@ -24,7 +21,7 @@ class DLPC1438_orig:
     # Pin numbering
     PROJ_ON = 5
     SYS_RDY = 6
-    HOST_IRQ = 19
+    HOST_IRQ = 16 # CHANGE FROM ORIGINAL
     SPI_RDY = 7
     PRINT_ACTIVE = 13
 
