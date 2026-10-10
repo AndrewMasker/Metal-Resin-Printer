@@ -21,9 +21,6 @@ class Result(Generic[T]):
     message: str = ""
     state: State = State.SUCCESS
 
-    def is_good():
-        return self.state is State.SUCCESS
-
 @dataclass
 class Printer_State:
     pos: list = field(default_factory=lambda:[0 , 0 , 0])
