@@ -12,7 +12,7 @@ dtparam=i2c_arm_baudrate=100000
 # DISPLAY
 dtoverlay=spi1-1cs,cs0_spidev=off
 dtoverlay=mipi-dbi-spi,spi1-0,speed=32000000,write-only
-dtparam=width=240,height=240
+dtparam=width={{display.width}},height={{display.height}}
 dtparam=reset-gpio=24,dc-gpio=22,backlight-gpio=23
 
 # INPUTS

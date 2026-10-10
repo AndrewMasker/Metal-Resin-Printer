@@ -16,15 +16,36 @@ BOOT=/boot/firmware
 [[ -d $BOOT ]] || BOOT=/boot
 CONFIG="$BOOT/config.txt"
 CMDLINE="$BOOT/cmdline.txt"
-
+ 
 # One time backups
 cp -n "$CONFIG" "$CONFIG.orig"
 cp -n "$CMDLINE" "$CMDLINE.orig"
 echo "Backups were created or already exist."
 
+# Render the config.txt based on values in config.yaml
+CFG="$DIR/../config/{$1:-config.yaml}" # Uses the first argument passed as name for config file, else uses config.yaml
+RENDERED="$(mktemp)"
+python3 - "$CFG" "$DIR/config.txt" > "$RENDERED" <<'PY'
+import re , sys , yaml
+with open(sys.argv[1]) as f:
+    cfg = yaml.safe_load(f)
+
+def lookup(match):
+    node = cfg
+    for key in match.group(1).split(".")
+        node = node[key]
+    return str(node)
+
+with open(sys.argv[2]) as f:
+    rendered = re.sub(r"\{\{s*([\w.]+)\s*\}\}" , lookup , f.read())
+    print(rendered , end = "")
+PY
+echo "Rendered config.txt"
+
 # Include the lmm_printer config.txt into the actual config.txt
 INCLUDE_NAME="lmm_printer_config.txt"
-install -m 644 "$DIR/config.txt" "$BOOT/$INCLUDE_NAME"
+install -m 644 "$RENDERED" "$BOOT/$INCLUDE_NAME"
+rm -f "$RENDERED"
 if ! grep -qxF "include $INCLUDE_NAME" "$CONFIG"; then
     printf '\n[all]\ninclude %s\n' "$INCLUDE_NAME" >> "$CONFIG"
 fi

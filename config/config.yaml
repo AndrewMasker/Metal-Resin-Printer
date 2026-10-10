@@ -25,3 +25,7 @@ reservoir:
 files:
   app_name: metal_resin_printer
   state_file_name: state_file
+
+display:
+  width: 240
+  height: 240

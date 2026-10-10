@@ -13,10 +13,11 @@ dependencies = [
     "spidev",
     "pillow",
     "platformdirs",
+    "pyyaml",
 ]
 
 [tool.lmm_printer]
-apt_pckgs = ["python3-numpy" , "python3-smbus" , "python3-spidev" , "python3-pil"]
+apt_pckgs = ["python3-numpy" , "python3-smbus" , "python3-spidev" , "python3-pil" , "python3-yaml"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
