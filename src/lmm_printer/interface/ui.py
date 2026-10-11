@@ -41,3 +41,11 @@ class Generic_UI(ABC):
         """
         This is a handler that polls for commands during the print.
         """
+        ...
+
+    @abstractmethod
+    def start_Poll_During_Print(self):
+        """
+        This is the function that starts the polling during print.
+        """
+        ...

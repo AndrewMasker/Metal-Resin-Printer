@@ -1,3 +1,4 @@
+import sys , select
 from lmm_printer.interface.ui import Generic_UI
 from lmm_printer.core.types import Result , State
 
@@ -128,6 +129,7 @@ class UI(Generic_UI):
         elif command == "getPos":
             self._get_Pos(print_session , args)
         elif command == "print":
+            self.start_Poll_During_Print()
             print_session.print()
 
     def _help(self):
@@ -304,4 +306,68 @@ class UI(Generic_UI):
             pos = print_session.printer.get_Axis_Position(axis_id)
             self.notify("Position of axis " + str(axis_id) + " is " + str(pos))
 
+    def start_Poll_During_Print(self):
+        """
+        Prints a helpful suggestion.
+        """
+        print("Enter h at any time for a list of commands. ")
+
+    def poll_During_Print(self , print_session):
+        """
+        Handles the buffer of inputs.
+
+        Parameters:
+            print_session (Print_Session): The print session to act upon.
+        """
+
+        while self._line_Ready():
+            cmd = sys.stdin.readline().strip().lower()
+            self._dispatch(cmd , print_session)
+
+    def _dispatch(self , inp , print_session):
+        """
+        Dispatches a command.
+
+        Parameters: 
+        inp (str): The input command as a string.
+        print_session (Print_Session): The print session to act upon.
+        """
+
+        if inp == "h":
+            print("")
+            print("h: Prints this message.")
+            print("p: Pauses the printer.")
+            print("q: Safely quits the process.")
+            print("t: Show the temperatures of probes. ")
+            print("Note - neither pausing nor quitting will stop axes from completing their current move.")
+            print("")
+
+        elif inp == "p":
+            print("Enter r to resume.")
+            while True:
+                response = input("").strip().lower()
+                if response == "r":
+                    break
+                    
+        elif inp == "q":
+            from lmm_printer.utils.vendored_handling import silence
+            print("Shutting down.")
+            print_session.printer.save_State()
+            with silence():
+                print_session.printer.projector.stop_exposure()
+            print_session.printer.set_Heater(0 , 0)
+            print_session.printer.set_Heater(1 , 0)
+            print_session.stop_print = True
+
+        elif inp == "t":
+            print("Chamber: " + str(print_session.printer.get_Temp(0)))
+            print("Recoater Heater: " + str(print_session.printer.get_Temp(1)))
+            print("Recoater Front: " + str(print_session.printer.get_Temp(2)))
+            
+    def _line_Ready(self):
+        """
+        Checks whether there is an input waiting.
+        """
+
+        return select.select([sys.stdin] , [] , [] , 0)[0] != []
 
