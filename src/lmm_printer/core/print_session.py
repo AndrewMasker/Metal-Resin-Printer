@@ -220,6 +220,7 @@ class Print_Session:
         """
         Checks whether everything is read to print and prints if so.
         """
+        self.stop_print = False
 
         from time import monotonic
         from lmm_printer.core.types import Print_File
@@ -287,6 +288,6 @@ class Print_Session:
 
     def stop_Print(self):
         self.notify("Shutting down.")
-        self.printer.save_State()
         self.printer.stop_Active()
+        self.printer.save_State()
         self.stop_print = True

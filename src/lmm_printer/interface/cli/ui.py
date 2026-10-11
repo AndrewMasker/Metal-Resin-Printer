@@ -119,7 +119,7 @@ class UI(Generic_UI):
         elif command == "choosefile":
             self._choose_File(print_session , args)
         elif command == "printfiles":
-            self._print_Files()
+            self._print_Files(print_session)
         elif command == "quit":
             self._quit(print_session)
         elif command == "home":
@@ -305,8 +305,11 @@ class UI(Generic_UI):
 
         elif inp == "t":
             result = print_session.get_Temps()
-            for key , value in result.value.items():
-                print(f"{key}: {value}")
+            if result.state == State.SUCCESS:
+                for key , value in result.value.items():
+                    print(f"{key}: {value}")
+            else:
+                self.notify(result)
             
     def _line_Ready(self):
         """
