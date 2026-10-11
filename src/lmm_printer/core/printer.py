@@ -171,7 +171,9 @@ class Printer:
         start = time.monotonic()
         while len(self.listening_for) != 0:
             if time.monotonic() - start > timeout:
-                raise TimeoutError("Teensy never responded to one of these: " + str(self.listening_for))
+                pending = list(self.listensing_for)
+                self.listening_for.clear()
+                raise TimeoutError(f"Teensy never responded to one of these: {pending}")
             messages = self.teensy.get_Messages()
             for lf in list(self.listening_for):
                 responses = [s for s in messages if lf in s]
@@ -206,9 +208,12 @@ class Printer:
 
     def safe_Shutdown(self):
         self.save_State(safe_shutdown = True)
+        self.stop_Active()
+        self.teensy.shutdown()
+        GPIO.cleanup()
+
+    def stop_Active(self):
         with silence():
             self.projector.stop_exposure()
         self.set_Heater(0 , 0)
         self.set_Heater(1 , 0)
-        self.teensy.shutdown()
-        GPIO.cleanup()

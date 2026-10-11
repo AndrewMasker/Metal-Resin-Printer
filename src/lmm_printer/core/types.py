@@ -17,7 +17,7 @@ class State(Enum):
 
 @dataclass
 class Result(Generic[T]):
-    value: T
+    value: T = None
     message: str = ""
     state: State = State.SUCCESS
 

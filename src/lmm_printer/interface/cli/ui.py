@@ -110,16 +110,16 @@ class UI(Generic_UI):
         """
 
         print("")
-        response = input("Enter Command: ").strip().lower().split()
-        command = response[0] if len(response) else None
+        response = input("Enter Command: ").strip().split()
+        command = response[0].lower() if len(response) else None
         args = response[1:] if len(response)>1 else None
 
         if command == "help":
             self._help()
-        elif command == "chooseFile":
-            self._choose_File(print_session)
-        elif command == "printFiles":
-            self._print_Files(print_session)
+        elif command == "choosefile":
+            self._choose_File(print_session , args)
+        elif command == "printfiles":
+            self._print_Files()
         elif command == "quit":
             self._quit(print_session)
         elif command == "home":
@@ -127,10 +127,11 @@ class UI(Generic_UI):
         elif command == "move":
             self._move(print_session , args)
         elif command == "getPos":
-            self._get_Pos(print_session , args)
+            self._get_Pos(print_session)
         elif command == "print":
-            self.start_Poll_During_Print()
             print_session.print()
+        else:
+            print("Unknown command. Enter 'help' for help.")
 
     def _help(self):
         """
@@ -184,7 +185,9 @@ class UI(Generic_UI):
             self.notify(files_result)
             return
         file_names , file_mnts = files_result.value
-
+        if not args:
+            print("Enter a file to choose. ")
+            return
         file_name = args[0]
         if file_name in file_names:
             index = file_names.index(file_name)
@@ -194,7 +197,6 @@ class UI(Generic_UI):
             print_session.load_Print_File(file_result.value)
         else:
             print("File name not found. Did you include the extension?")
-
 
     def _quit(self , print_session):
         """
@@ -233,66 +235,18 @@ class UI(Generic_UI):
         Parameters:
             print_session (Print_Session): The print session to act upon.
         """
-
-        if args[-1] == "top":
-            if len(args)>1:
-                if args[0].isdigit():
-                    axis_id = int(args[0])
-                else:
-                    print("Provide a valid axis id.")
-                    return
-            else:
-                print("Provide an axis to move to top.")
-                return
-            result = print_session.move(axis_id , method="top")
-
-        elif len(args)>2 and args[1]=="absolute":
-            if args[0].isdigit():
-                axis_id = int(args[0])
-            else:
-                print("Provide a valid axis id.")
-                return
-            
-            try:
-                amount = float(args[2])
-            except ValueError:
-                print("Enter a valid position to move to.")
-                return
-
-            result = print_session.move(axis_id , method="absolute" , amount=amount)
-
-        elif args[1] == "relative":
-            if args[0].isdigit():
-                axis_id = int(args[0])
-            else:
-                print("Provide a valid axis id.")
-                return
-            
-            try:
-                amount = float(args[2])
-            except ValueError:
-                print("Enter a valid amount to move by.")
-                return
-
-            result = print_session.move(axis_id , method="relative" , amount=amount)
-
-        else:
-            if args[0].isdigit():
-                axis_id = int(args[0])
-            else:
-                print("Provide a valid axis id.")
-                return
-            
-            try:
-                amount = float(args[1])
-            except ValueError:
-                print("Enter a valid amount to move by.")
-                return
-
-            result = print_session.move(axis_id , method="relative" , amount=amount)
-
-        self.notify(result)
-
+        trace_error = "Use a correct trace. Enter 'help' for a list of commands with their traces."
+        if not args or len(args)<2 or not args[0].isdigit():
+            print(trace_error); return
+        axis_id , method , amount = int(args[0]) , args[1] , None
+        if method in ("relative" , "absolute"):
+            if len(args)<3: print(trace_error); return
+            try: amount = float(args[2])
+            except ValueError: print(trace_error); return
+        elif method != "top":
+            try: amount = float(args[1]); method = "relative"
+            except ValueError: print(trace_error); return
+        self.notify(print_session.move(axis_id , method , amount))
 
     def _get_Pos(self , print_session):
         """
@@ -302,9 +256,13 @@ class UI(Generic_UI):
             print_session (Print_Session): The print session to act upon.
         """
 
-        for axis_id in range(3):
-            pos = print_session.printer.get_Axis_Position(axis_id)
-            self.notify("Position of axis " + str(axis_id) + " is " + str(pos))
+        result = print_session.get_Positions()
+        if result.state == State.SUCCESS:
+            for pos in result.value:
+                print(pos)
+        else:
+            self.notify(result)
+
 
     def start_Poll_During_Print(self):
         """
@@ -350,19 +308,12 @@ class UI(Generic_UI):
                     break
                     
         elif inp == "q":
-            from lmm_printer.utils.vendored_handling import silence
-            print("Shutting down.")
-            print_session.printer.save_State()
-            with silence():
-                print_session.printer.projector.stop_exposure()
-            print_session.printer.set_Heater(0 , 0)
-            print_session.printer.set_Heater(1 , 0)
-            print_session.stop_print = True
+            print_session.stop_Print()
 
         elif inp == "t":
-            print("Chamber: " + str(print_session.printer.get_Temp(0)))
-            print("Recoater Heater: " + str(print_session.printer.get_Temp(1)))
-            print("Recoater Front: " + str(print_session.printer.get_Temp(2)))
+            result = print_session.get_Temps()
+            for key , value in result.value:
+                print(f"{key}: {value}")
             
     def _line_Ready(self):
         """

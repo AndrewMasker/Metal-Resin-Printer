@@ -29,35 +29,18 @@ class Print_Session:
         self.file_good = False
         self.stop_print = False
         self.should_go = True
+        self.hardware_good = False
 
         if args.gui:
-            print("No GUI yet")
+            from lmm_printer.interface.gui.ui import UI
+            self.ui = UI()
         else:
-            self.load_CLI()
+            from lmm_printer.interface.cli.ui import UI
+            self.ui = UI()
 
-    def load_CLI(self):
-        """
-        Loads the CLI objects.
-        """
+    def notify(self , message):
+        self.ui.notify(message)
 
-        from lmm_printer.interface.cli.inputs import Input_Handler , Print_Input_Handler
-        from lmm_printer.interface.cli.outputs import Output_Handler
-
-        self.input_handler = Input_Handler()
-        self.print_input_handler = Print_Input_Handler()
-        self.output_handler = Output_Handler(self.args , self.config)
-
-    def load_GUI(self):
-        """
-        Loads the CLI objects.
-        """
-
-        from lmm_printer.interface.gui.inputs import Input_Handler , Print_Input_Handler
-        from lmm_printer.interface.gui.outputs import Output_Handler
-
-        self.input_handler = Input_Handler()
-        self.print_input_handler = Print_Input_Handler()
-        self.output_handler = Output_Handler(self.args , self.config)
 
     def _add_State_File_To_Config(self):
         """
@@ -80,7 +63,7 @@ class Print_Session:
         from lmm_printer.core.printer import Printer
 
         teensy_result = return_Teensy_Serial(self.config["teensy"]["vid"] , self.config["teensy"]["baudrate"] , self.config["teensy"]["timeout"] , self.config["teensy"]["enable_fallback"])
-        self.output_handler.handle(teensy_result)
+        self.notify(teensy_result)
         if teensy_result.state == State.ERROR:
             teensy_loaded = False
         else:
@@ -88,7 +71,7 @@ class Print_Session:
         teensy = teensy_result.value
 
         projector_result = return_Projector(self.config["projector"]["spi_max_speed"])
-        self.output_handler.handle(projector_result)
+        self.notify(projector_result)
         if projector_result.state == State.ERROR:
             projector_loaded = False
         else:
@@ -99,15 +82,15 @@ class Print_Session:
             self.printer = Printer(teensy , projector , self.config)
             state = self.printer.load_State()
             if not state.safe_shutdown:
-                self.output_handler.handle("Last shutdown was not safe. Ensure you home if you do not trust the axes' positions. ")
+                self.notify("Last shutdown was not safe. Ensure you home if you do not trust the axes' positions. ")
             else:
-                self.output_handler.handle("Ensure you trust the axes' positions before starting.Home if you do not. ")
+                self.notify("Ensure you trust the axes' positions before starting.Home if you do not. ")
             self.hardware_good = True
         else:
             self.hardware_good = False
 
-    def load_Print_File(self , file_result):
-        self.file = file_result.value
+    def load_Print_File(self , file):
+        self.file = file
         self.load_Print_File_Attributes()
 
     def load_Print_File_Attributes(self):
@@ -118,7 +101,7 @@ class Print_Session:
         from lmm_printer.core.types import Print_File
 
         if not hasattr(self , "file"):
-            self.output_handler.handle("Choose a file first. ")
+            self.notify("Choose a file first. ")
             return
         with Print_File(self.file) as print_file:
             num_layers = print_file.get_Num_Layers()
@@ -127,10 +110,10 @@ class Print_Session:
         
         print_file_error = False
         if image_result.state == State.ERROR:
-            self.output_handler.handle(image_result)
+            self.notify(image_result)
             print_file_error = True
         if options_result.state == State.ERROR:
-            self.output_handler.handle(options_result)
+            self.notify(options_result)
             print_file_error = True
         if print_file_error:
             return
@@ -140,6 +123,8 @@ class Print_Session:
         self.file_good = True
 
     def home(self , axes):
+        if not self.hardware_good:
+            return Result(state = State.ERROR , message=f"Hardware is not good.")
         messages = []
         if "all" in axes:
             try:
@@ -151,7 +136,7 @@ class Print_Session:
                 messages.append(Result(value="all error" , state=State.ERROR , message=f"Error homing all axes. Error was: {e}."))
         else:
             axis_ids = []
-            for axis_id in axis_ids:
+            for axis_id in axes:
                 if axis_id.isdigit():
                     if 3>(axis_id:=int(axis_id))>=0:
                         if axis_id not in axis_ids:
@@ -175,6 +160,10 @@ class Print_Session:
         return messages
 
     def move(self , axis_id , method , amount=None):
+        if not self.hardware_good:
+            return Result(state = State.ERROR , message=f"Hardware is not good.")
+        if not 0 <= axis_id <= 3:
+            return Result(state=State.ERROR , messgae=f"Error moving axis {axis_id}. Axis out of range.")
         if method == "top":
             try:
                 self.printer.move_Axis_To_Top(axis_id)
@@ -196,6 +185,36 @@ class Print_Session:
                 return Result(state=State.SUCCESS , message=f"Successfully moved {axis_id} by {amount} relatively.")
             except Exception as e:
                 return Result(state=State.ERROR , message=f"Error moving axis {axis_id} by {amount} relatively. Error was {e}")
+        else:
+            return Result(state=State.Error , message=f"Error moving with method {method}. Unknown method.")
+
+    def get_Positions(self):
+        try:
+            pos = []
+            for axis_id in range(3):
+                pos.append(self.printer.get_Axis_Position(axis_id))
+            return Result(value = pos , state = State.SUCCESS , message = "Successfully got positions")
+        except Exception as e:
+            return Result(state = State.ERROR , message = f"Error getting positions. Error was {e}.")
+
+    def get_Temps(self):
+        try:
+            temps = {}
+            temps["Chamber"] = self.printer.get_Temp(0)
+            temps["Recoater Heater"] = self.printer.get_Temp(1)
+            temps["Recoater Front"] = self.printer.get_Temp(2)
+            return Result(state = State.SUCCESS , message = f"Successfully got temps.")
+        except Exception as e:
+            return Result(state = State.ERROR , message = f"Error getting temp. Error was {e}")
+
+    def get_Files(self):
+        from lmm_printer.core.files import return_RM_Drives , get_Files
+        drives_result = return_RM_Drives()
+        if drives_result.state == State.ERROR:
+            return drives_result
+        drives = drives_result.value
+        file_names , file_mnts = get_Files(drives)
+        return Result(value = (file_names , file_mnts) , state = State.SUCCESS)
 
     def print(self):
         """
@@ -207,20 +226,20 @@ class Print_Session:
         from lmm_printer.utils.vendored_handling import silence
 
         if not self.hardware_good:
-            self.output_handler.handle("Cannot start a print with bad hardware or connection. ")
+            self.notify("Cannot start a print with bad hardware or connection. ")
             return
         if not self.file_good:
-            self.output_handler.handle("You must load a file before printing. ")
+            self.notify("You must load a file before printing. ")
             return
         
-        self.print_input_handler.suggestion()
+        self.ui.start_Poll_During_Print()
         self.printer.start_Heaters()
         for i in range(1 , self.num_layers + 1):
             while not self.stop_print:
-                self.print_input_handler.handle(self)
+                self.ui.poll_During_Print(self)
                 if self.printer.check_Heaters():
                     break
-            self.print_input_handler.handle(self)
+            self.ui.poll_During_Print(self)
             if self.stop_print:
                 self.stop_print = False
                 return
@@ -239,7 +258,7 @@ class Print_Session:
             start_time = monotonic()
             self.printer.do_Current_Layer(next_image , self.options)
             end_time = monotonic()
-            self.output_handler.handle("Layer " + str(i) + " of " + str(self.num_layers) + " done. Took: " + str(end_time - start_time) + " seconds.")
+            self.notify("Layer " + str(i) + " of " + str(self.num_layers) + " done. Took: " + str(end_time - start_time) + " seconds.")
         
     def go(self):
         """
@@ -247,9 +266,12 @@ class Print_Session:
         """
 
         self.load_Hardware()
-        self.input_handler.suggestion()
+        self.ui.start()
         while self.should_go:
-            self.input_handler.get_Do_Command(self)
+            try:
+                self.ui.get_Do_Command(self)
+            except Exception as e:
+                self.notify(Result(state=State.ERROR , message=f"Command failed with error {e}."))
 
     def quit(self):
         if self.hardware_good:
@@ -257,3 +279,9 @@ class Print_Session:
             self.should_go = False
         else:
             self.should_go = False
+
+    def stop_Print(self):
+        print("Shutting down.")
+        self.printer.save_State()
+        self.printer.stop_Active()
+        self.stop_print = True
