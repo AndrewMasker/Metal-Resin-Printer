@@ -126,10 +126,12 @@ class UI(Generic_UI):
             self._home(print_session , args)
         elif command == "move":
             self._move(print_session , args)
-        elif command == "getPos":
+        elif command == "getpos":
             self._get_Pos(print_session)
         elif command == "print":
             print_session.print()
+        elif command is None:
+            return
         else:
             print("Unknown command. Enter 'help' for help.")
 
@@ -145,20 +147,11 @@ class UI(Generic_UI):
         print("quit: Quits the program safely. ")
         print("home: Homes all or the given axes. Traces -> \n\t home all \n\t home <axis_a> <axis_b> <axis_c>  ")
         print("move: Moves an axis with a given method by some amount. Traces -> \n\t move <axis_id> relative <amount> \n\t move <axis_id> absolute <position> \n\t move <axis_id> top")
-        print("getPos: Gets the position of all axes. ")
+        print("getpos: Gets the position of all axes. ")
         print("print: Prints selected file. ")
 
-    def _get_Files(self):
-        from lmm_printer.core.files import return_RM_Drives , get_Files
-        drives_result = return_RM_Drives()
-        if drives_result.state == State.ERROR:
-            return drives_result
-        drives = drives_result.value
-        file_names , file_mnts = get_Files(drives)
-        return Result(value = (file_names , file_mnts) , state = State.SUCCESS)
-
-    def _print_Files(self):
-        files_result = self._get_Files()
+    def _print_Files(self , print_session):
+        files_result = print_session.get_Files()
         if files_result.state == State.ERROR:
             self.notify(files_result)
             return
@@ -180,7 +173,7 @@ class UI(Generic_UI):
 
         from pathlib import Path
 
-        files_result = self._get_Files()
+        files_result = print_session.get_Files()
         if files_result.state == State.ERROR:
             self.notify(files_result)
             return
@@ -258,8 +251,8 @@ class UI(Generic_UI):
 
         result = print_session.get_Positions()
         if result.state == State.SUCCESS:
-            for pos in result.value:
-                print(pos)
+            for axis_id , pos in enumerate(result.value):
+                print(f"Axis id {axis_id}: {pos} mm.")
         else:
             self.notify(result)
 
@@ -312,7 +305,7 @@ class UI(Generic_UI):
 
         elif inp == "t":
             result = print_session.get_Temps()
-            for key , value in result.value:
+            for key , value in result.value.items():
                 print(f"{key}: {value}")
             
     def _line_Ready(self):

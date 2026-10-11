@@ -124,7 +124,7 @@ class Print_Session:
 
     def home(self , axes):
         if not self.hardware_good:
-            return Result(state = State.ERROR , message=f"Hardware is not good.")
+            return [Result(state = State.ERROR , message=f"Hardware is not good.")]
         messages = []
         if "all" in axes:
             try:
@@ -162,8 +162,8 @@ class Print_Session:
     def move(self , axis_id , method , amount=None):
         if not self.hardware_good:
             return Result(state = State.ERROR , message=f"Hardware is not good.")
-        if not 0 <= axis_id <= 3:
-            return Result(state=State.ERROR , messgae=f"Error moving axis {axis_id}. Axis out of range.")
+        if not 0 <= axis_id < 3:
+            return Result(state=State.ERROR , message=f"Error moving axis {axis_id}. Axis out of range.")
         if method == "top":
             try:
                 self.printer.move_Axis_To_Top(axis_id)
@@ -186,7 +186,7 @@ class Print_Session:
             except Exception as e:
                 return Result(state=State.ERROR , message=f"Error moving axis {axis_id} by {amount} relatively. Error was {e}")
         else:
-            return Result(state=State.Error , message=f"Error moving with method {method}. Unknown method.")
+            return Result(state=State.ERROR , message=f"Error moving with method {method}. Unknown method.")
 
     def get_Positions(self):
         try:
@@ -203,7 +203,7 @@ class Print_Session:
             temps["Chamber"] = self.printer.get_Temp(0)
             temps["Recoater Heater"] = self.printer.get_Temp(1)
             temps["Recoater Front"] = self.printer.get_Temp(2)
-            return Result(state = State.SUCCESS , message = f"Successfully got temps.")
+            return Result(value = temps , state = State.SUCCESS , message = f"Successfully got temps.")
         except Exception as e:
             return Result(state = State.ERROR , message = f"Error getting temp. Error was {e}")
 
@@ -234,31 +234,36 @@ class Print_Session:
         
         self.ui.start_Poll_During_Print()
         self.printer.start_Heaters()
-        for i in range(1 , self.num_layers + 1):
-            while not self.stop_print:
+        try:
+            for i in range(1 , self.num_layers + 1):
+                while not self.stop_print:
+                    self.ui.poll_During_Print(self)
+                    if self.printer.check_Heaters():
+                        break
                 self.ui.poll_During_Print(self)
-                if self.printer.check_Heaters():
-                    break
-            self.ui.poll_During_Print(self)
-            if self.stop_print:
-                self.stop_print = False
-                return
-            with Print_File(self.file) as print_file:
-                if i == self.num_layers:
-                    next_image = None
-                else:
-                    next_image = print_file.get_Image(i + 1).value
-                    
-                if i == 1:
-                    this_image = print_file.get_Image(i).value
-                    self.printer.init_Print(this_image , self.options)
-                    # with silence():
-                    #     self.printer.projector.send_pixeldata_to_buffer(this_image , 0 , 0)
+                if self.stop_print:
+                    self.stop_print = False
+                    return
+                with Print_File(self.file) as print_file:
+                    if i == self.num_layers:
+                        next_image = None
+                    else:
+                        next_image = print_file.get_Image(i + 1).value
+                        
+                    if i == 1:
+                        this_image = print_file.get_Image(i).value
+                        self.printer.init_Print(this_image , self.options)
+                        # with silence():
+                        #     self.printer.projector.send_pixeldata_to_buffer(this_image , 0 , 0)
 
-            start_time = monotonic()
-            self.printer.do_Current_Layer(next_image , self.options)
-            end_time = monotonic()
-            self.notify("Layer " + str(i) + " of " + str(self.num_layers) + " done. Took: " + str(end_time - start_time) + " seconds.")
+                start_time = monotonic()
+                self.printer.do_Current_Layer(next_image , self.options)
+                end_time = monotonic()
+                self.notify("Layer " + str(i) + " of " + str(self.num_layers) + " done. Took: " + str(end_time - start_time) + " seconds.")
+        except Exception as e:
+            self.stop_Print()
+            self.notify(f"Error during print. Error was: {e}")
+
         
     def go(self):
         """
@@ -281,7 +286,7 @@ class Print_Session:
             self.should_go = False
 
     def stop_Print(self):
-        print("Shutting down.")
+        self.notify("Shutting down.")
         self.printer.save_State()
         self.printer.stop_Active()
         self.stop_print = True

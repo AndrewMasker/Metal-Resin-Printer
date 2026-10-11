@@ -171,7 +171,7 @@ class Printer:
         start = time.monotonic()
         while len(self.listening_for) != 0:
             if time.monotonic() - start > timeout:
-                pending = list(self.listensing_for)
+                pending = list(self.listening_for)
                 self.listening_for.clear()
                 raise TimeoutError(f"Teensy never responded to one of these: {pending}")
             messages = self.teensy.get_Messages()
