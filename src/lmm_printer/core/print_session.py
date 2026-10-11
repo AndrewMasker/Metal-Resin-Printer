@@ -1,4 +1,4 @@
-from lmm_printer.core.types import State
+from lmm_printer.core.types import State , Result
 
 class Print_Session:
     """
@@ -42,6 +42,18 @@ class Print_Session:
 
         from lmm_printer.interface.cli.inputs import Input_Handler , Print_Input_Handler
         from lmm_printer.interface.cli.outputs import Output_Handler
+
+        self.input_handler = Input_Handler()
+        self.print_input_handler = Print_Input_Handler()
+        self.output_handler = Output_Handler(self.args , self.config)
+
+    def load_GUI(self):
+        """
+        Loads the CLI objects.
+        """
+
+        from lmm_printer.interface.gui.inputs import Input_Handler , Print_Input_Handler
+        from lmm_printer.interface.gui.outputs import Output_Handler
 
         self.input_handler = Input_Handler()
         self.print_input_handler = Print_Input_Handler()
@@ -94,6 +106,10 @@ class Print_Session:
         else:
             self.hardware_good = False
 
+    def load_Print_File(self , file_result):
+        self.file = file_result.value
+        self.load_Print_File_Attributes()
+
     def load_Print_File_Attributes(self):
         """
         Loads the print file attributes.
@@ -122,6 +138,64 @@ class Print_Session:
         self.num_layers = num_layers
         self.options = options_result.value
         self.file_good = True
+
+    def home(self , axes):
+        messages = []
+        if "all" in axes:
+            try:
+                self.printer.home_Axes() 
+                self.printer.save_State()
+                messages.append(Result(value=None , state=State.SUCCESS , message="All axes homed successfully."))
+            except Exception as e:
+                self.printer.save_State()
+                messages.append(Result(value="all error" , state=State.ERROR , message=f"Error homing all axes. Error was: {e}."))
+        else:
+            axis_ids = []
+            for axis_id in axis_ids:
+                if axis_id.isdigit():
+                    if 3>(axis_id:=int(axis_id))>=0:
+                        if axis_id not in axis_ids:
+                            axis_ids.append(axis_id)
+                        else:
+                            messages.append(Result(value=None , state=State.ERROR , message=f"Axis {axis_id} entered multiple times. Skipping duplicates."))
+                    else:
+                        messages.append(Result(value=None , state=State.ERROR , message=f"Axis {axis_id} is not a valid axis_id."))
+                else:
+                    messages.append(Result(value=None , state=State.ERROR , message=f"Axis {axis_id} is not a valid axis_id."))
+            if axis_ids:
+                try:
+                    self.printer.home_Axes(axis_ids)
+                    self.printer.save_State()
+                    messages.append(Result(value=None , state=State.SUCCESS , message=f"Axes {axis_ids} homed successfully."))
+                except Exception as e:
+                    self.printer.save_State()
+                    messages.append(Result(value="not all error" , state=State.ERROR , message=f"Error homing axes {axis_ids}. Error was: {e}."))
+            else:
+                messages.append(Result(value=None , state=State.ERROR , message="No valid axes input."))
+        return messages
+
+    def move(self , axis_id , method , amount=None):
+        if method == "top":
+            try:
+                self.printer.move_Axis_To_Top(axis_id)
+                self.printer.save_State()
+                return Result(state=State.SUCCESS , message=f"Successfully moved {axis_id} to top.")
+            except Exception as e:
+                return Result(state=State.ERROR , message=f"Error moving axis {axis_id} to top. Error was {e}")
+        elif method == "absolute":
+            try:
+                self.printer.move_Axis_Absolute(axis_id , amount)
+                self.printer.save_State()
+                return Result(state=State.SUCCESS , message=f"Successfully moved {axis_id} to {amount} absolutely.")
+            except Exception as e:
+                return Result(state=State.ERROR , message=f"Error moving axis {axis_id} to {amount} absolutely. Error was {e}")
+        elif method == "relative":
+            try:
+                self.printer.move_Axis_Relative(axis_id , amount)
+                self.printer.save_State()
+                return Result(state=State.SUCCESS , message=f"Successfully moved {axis_id} by {amount} relatively.")
+            except Exception as e:
+                return Result(state=State.ERROR , message=f"Error moving axis {axis_id} by {amount} relatively. Error was {e}")
 
     def print(self):
         """
@@ -176,3 +250,10 @@ class Print_Session:
         self.input_handler.suggestion()
         while self.should_go:
             self.input_handler.get_Do_Command(self)
+
+    def quit(self):
+        if self.hardware_good:
+            self.printer.safe_Shutdown()
+            self.should_go = False
+        else:
+            self.should_go = False
