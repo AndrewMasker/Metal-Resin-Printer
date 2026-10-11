@@ -137,12 +137,12 @@ class UI(Generic_UI):
 
         print("")
         print("help: Prints this message. ")
-        print("chooseFile: Enter the file select menu. ")
-        print("printFiles: Prints all files. ")
+        print("chooseFile: Loads name.extension. Traces -> \n\t chooseFile <name.extension>")
+        print("printFiles: Prints all found files. ")
         print("quit: Quits the program safely. ")
-        print("home: Enter the home menu. ")
-        print("move: Enter the move menu. ")
-        print("getPos: Gets the position of an axis. ")
+        print("home: Homes all or the given axes. Traces -> \n\t home all \n\t home <axis_a> <axis_b> <axis_c>  ")
+        print("move: Moves an axis with a given method by some amount. Traces -> \n\t move <axis_id> relative <amount> \n\t move <axis_id> absolute <position> \n\t move <axis_id> top")
+        print("getPos: Gets the position of all axes. ")
         print("print: Prints selected file. ")
 
     def _get_Files(self):
@@ -290,5 +290,18 @@ class UI(Generic_UI):
             result = print_session.move(axis_id , method="relative" , amount=amount)
 
         self.notify(result)
-            
+
+
+    def _get_Pos(self , print_session):
+        """
+        Prints the postions of all axes
+
+        Parameters:
+            print_session (Print_Session): The print session to act upon.
+        """
+
+        for axis_id in range(3):
+            pos = print_session.printer.get_Axis_Position(axis_id)
+            self.notify("Position of axis " + str(axis_id) + " is " + str(pos))
+
 
