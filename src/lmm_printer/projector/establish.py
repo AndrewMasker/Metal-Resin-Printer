@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 import smbus  # I2C
 import spidev  # SPI
 from lmm_printer.vendored.UV_projector.controller import DLPC1438 , Mode
-from lmm_printer.core.types import Result , State
+from lmm_printer.core.types import Result
 from lmm_printer.utils.vendored_handling import silence
 
 
@@ -31,8 +31,8 @@ def return_Projector(spi_max_speed):
             # intialise FPGA buffers to zero
             projector.set_background(intensity = 0, both_buffers = True)
 
-        return Result(value = projector , state = State.SUCCESS , message = "Projector connection successful.")
+        return Result.success(value = projector , message = "Projector connection successful.")
 
     except Exception as e:
         GPIO.cleanup()
-        return Result(value = None , state = State.ERROR , message = "Can't open projector. " + "Error was: " + str(e))
+        return Result.error(message = "Can't open projector. " + "Error was: " + str(e))

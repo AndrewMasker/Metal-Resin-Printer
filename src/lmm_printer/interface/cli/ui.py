@@ -1,6 +1,6 @@
 import sys , select
 from lmm_printer.interface.ui import Generic_UI
-from lmm_printer.core.types import Result , State
+from lmm_printer.core.types import Result
 
 class UI(Generic_UI):
     def start(self):
@@ -152,7 +152,7 @@ class UI(Generic_UI):
 
     def _print_Files(self , print_session):
         files_result = print_session.get_Files()
-        if files_result.state == State.ERROR:
+        if files_result.bad:
             self.notify(files_result)
             return
         file_names , _ = files_result.value
@@ -174,7 +174,7 @@ class UI(Generic_UI):
         from pathlib import Path
 
         files_result = print_session.get_Files()
-        if files_result.state == State.ERROR:
+        if files_result.bad:
             self.notify(files_result)
             return
         file_names , file_mnts = files_result.value
@@ -185,7 +185,7 @@ class UI(Generic_UI):
         if file_name in file_names:
             index = file_names.index(file_name)
             mnt = file_mnts[index]
-            file_result = Result(value = Path(mnt) / file_name , state = State.SUCCESS , message = "Successfully chose file: " + file_name + ", at mount: " + mnt + ".")
+            file_result = Result.success(value = Path(mnt) / file_name , message = "Successfully chose file: " + file_name + ", at mount: " + mnt + ".")
             self.notify(file_result)
             print_session.load_Print_File(file_result.value)
         else:
@@ -208,17 +208,19 @@ class UI(Generic_UI):
         Parameters:
             print_session (Print_Session): The print session to act upon.
         """
-
-        if args:
-            results = print_session.home(args)
+        if not args:
+            result = Result.error(message = "You must enter a some axes to home. Enter 'help' for help.")
         else:
-            print("")
-            print("Enter 'all' to home all axes. Enter a space separated list of axis ids to home those axes. Press enter when finished.")
-            responses = input("").strip().split()
-            results = print_session.home(responses)
+            if 'all' in args:
+                result = print_session.home()
+            else:
+                args = [int(arg) for arg in args if arg.isdigit()]
+                if not args:
+                    result = Result.error(message = "No valid arguments entered.")
+                else:
+                    result = print_session.home(args)
 
-        for result in results:
-            self.notify(result)
+        self.notify(result)
 
     def _move(self , print_session , args):
         """
@@ -250,7 +252,7 @@ class UI(Generic_UI):
         """
 
         result = print_session.get_Positions()
-        if result.state == State.SUCCESS:
+        if result.good:
             for axis_id , pos in enumerate(result.value):
                 print(f"Axis id {axis_id}: {pos} mm.")
         else:
@@ -305,7 +307,7 @@ class UI(Generic_UI):
 
         elif inp == "t":
             result = print_session.get_Temps()
-            if result.state == State.SUCCESS:
+            if result.good:
                 for key , value in result.value.items():
                     print(f"{key}: {value}")
             else:

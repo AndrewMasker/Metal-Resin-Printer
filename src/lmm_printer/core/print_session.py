@@ -1,4 +1,4 @@
-from lmm_printer.core.types import State , Result
+from lmm_printer.core.types import Result
 
 class Print_Session:
     """
@@ -64,7 +64,7 @@ class Print_Session:
 
         teensy_result = return_Teensy_Serial(self.config["teensy"]["vid"] , self.config["teensy"]["baudrate"] , self.config["teensy"]["timeout"] , self.config["teensy"]["enable_fallback"])
         self.notify(teensy_result)
-        if teensy_result.state == State.ERROR:
+        if teensy_result.bad:
             teensy_loaded = False
         else:
             teensy_loaded = True
@@ -72,7 +72,7 @@ class Print_Session:
 
         projector_result = return_Projector(self.config["projector"]["spi_max_speed"])
         self.notify(projector_result)
-        if projector_result.state == State.ERROR:
+        if projector_result.bad:
             projector_loaded = False
         else:
             projector_loaded = True
@@ -109,10 +109,10 @@ class Print_Session:
             options_result = print_file.get_Options()
         
         print_file_error = False
-        if image_result.state == State.ERROR:
+        if image_result.bad:
             self.notify(image_result)
             print_file_error = True
-        if options_result.state == State.ERROR:
+        if options_result.bad:
             self.notify(options_result)
             print_file_error = True
         if print_file_error:
@@ -122,80 +122,68 @@ class Print_Session:
         self.options = options_result.value
         self.file_good = True
 
-    def home(self , axes):
+    def home(self , axis_ids = None):
         if not self.hardware_good:
-            return [Result(state = State.ERROR , message=f"Hardware is not good.")]
-        messages = []
-        if "all" in axes:
+            return Result.error(message=f"Hardware is not good.")
+        if not axis_ids:
             try:
                 self.printer.home_Axes() 
                 self.printer.save_State()
-                messages.append(Result(value=None , state=State.SUCCESS , message="All axes homed successfully."))
+                return Result.success(message="All axes homed successfully.")
             except Exception as e:
                 self.printer.save_State()
-                messages.append(Result(value="all error" , state=State.ERROR , message=f"Error homing all axes. Error was: {e}."))
+                return Result.error(message=f"Error homing all axes. Error was: {e}.")
         else:
-            axis_ids = []
-            for axis_id in axes:
-                if axis_id.isdigit():
-                    if 3>(axis_id:=int(axis_id))>=0:
-                        if axis_id not in axis_ids:
-                            axis_ids.append(axis_id)
-                        else:
-                            messages.append(Result(value=None , state=State.ERROR , message=f"Axis {axis_id} entered multiple times. Skipping duplicates."))
-                    else:
-                        messages.append(Result(value=None , state=State.ERROR , message=f"Axis {axis_id} is not a valid axis_id."))
-                else:
-                    messages.append(Result(value=None , state=State.ERROR , message=f"Axis {axis_id} is not a valid axis_id."))
+            axis_ids = list(set(axis_ids))
+            axis_ids = [a for a in axis_ids if 0 <= a < 3]
             if axis_ids:
                 try:
                     self.printer.home_Axes(axis_ids)
                     self.printer.save_State()
-                    messages.append(Result(value=None , state=State.SUCCESS , message=f"Axes {axis_ids} homed successfully."))
+                    return Result.success(message=f"Axes {axis_ids} homed successfully.")
                 except Exception as e:
                     self.printer.save_State()
-                    messages.append(Result(value="not all error" , state=State.ERROR , message=f"Error homing axes {axis_ids}. Error was: {e}."))
+                    return Result.error(message=f"Error homing axes {axis_ids}. Error was: {e}.")
             else:
-                messages.append(Result(value=None , state=State.ERROR , message="No valid axes input."))
-        return messages
+                return Result.error(message="No valid axes input.")
 
     def move(self , axis_id , method , amount=None):
         if not self.hardware_good:
-            return Result(state = State.ERROR , message=f"Hardware is not good.")
+            return Result.error(message=f"Hardware is not good.")
         if not 0 <= axis_id < 3:
-            return Result(state=State.ERROR , message=f"Error moving axis {axis_id}. Axis out of range.")
+            return Result.error(message=f"Error moving axis {axis_id}. Axis out of range.")
         if method == "top":
             try:
                 self.printer.move_Axis_To_Top(axis_id)
                 self.printer.save_State()
-                return Result(state=State.SUCCESS , message=f"Successfully moved {axis_id} to top.")
+                return Result.success(message=f"Successfully moved {axis_id} to top.")
             except Exception as e:
-                return Result(state=State.ERROR , message=f"Error moving axis {axis_id} to top. Error was {e}")
+                return Result.error(message=f"Error moving axis {axis_id} to top. Error was {e}")
         elif method == "absolute":
             try:
                 self.printer.move_Axis_Absolute(axis_id , amount)
                 self.printer.save_State()
-                return Result(state=State.SUCCESS , message=f"Successfully moved {axis_id} to {amount} absolutely.")
+                return Result.success(message=f"Successfully moved {axis_id} to {amount} absolutely.")
             except Exception as e:
-                return Result(state=State.ERROR , message=f"Error moving axis {axis_id} to {amount} absolutely. Error was {e}")
+                return Result.error(message=f"Error moving axis {axis_id} to {amount} absolutely. Error was {e}")
         elif method == "relative":
             try:
                 self.printer.move_Axis_Relative(axis_id , amount)
                 self.printer.save_State()
-                return Result(state=State.SUCCESS , message=f"Successfully moved {axis_id} by {amount} relatively.")
+                return Result.success(message=f"Successfully moved {axis_id} by {amount} relatively.")
             except Exception as e:
-                return Result(state=State.ERROR , message=f"Error moving axis {axis_id} by {amount} relatively. Error was {e}")
+                return Result.error(message=f"Error moving axis {axis_id} by {amount} relatively. Error was {e}")
         else:
-            return Result(state=State.ERROR , message=f"Error moving with method {method}. Unknown method.")
+            return Result.error(message=f"Error moving with method {method}. Unknown method.")
 
     def get_Positions(self):
         try:
             pos = []
             for axis_id in range(3):
                 pos.append(self.printer.get_Axis_Position(axis_id))
-            return Result(value = pos , state = State.SUCCESS , message = "Successfully got positions")
+            return Result.success(message = "Successfully got positions" , value = pos)
         except Exception as e:
-            return Result(state = State.ERROR , message = f"Error getting positions. Error was {e}.")
+            return Result.error(message = f"Error getting positions. Error was {e}.")
 
     def get_Temps(self):
         try:
@@ -203,18 +191,18 @@ class Print_Session:
             temps["Chamber"] = self.printer.get_Temp(0)
             temps["Recoater Heater"] = self.printer.get_Temp(1)
             temps["Recoater Front"] = self.printer.get_Temp(2)
-            return Result(value = temps , state = State.SUCCESS , message = f"Successfully got temps.")
+            return Result.success(message = f"Successfully got temps." , value = temps)
         except Exception as e:
-            return Result(state = State.ERROR , message = f"Error getting temp. Error was {e}")
+            return Result.error(message = f"Error getting temp. Error was {e}")
 
     def get_Files(self):
         from lmm_printer.core.files import return_RM_Drives , get_Files
         drives_result = return_RM_Drives()
-        if drives_result.state == State.ERROR:
+        if drives_result.bad:
             return drives_result
         drives = drives_result.value
         file_names , file_mnts = get_Files(drives)
-        return Result(value = (file_names , file_mnts) , state = State.SUCCESS)
+        return Result.success(value = (file_names , file_mnts))
 
     def print(self):
         """
@@ -277,7 +265,7 @@ class Print_Session:
             try:
                 self.ui.get_Do_Command(self)
             except Exception as e:
-                self.notify(Result(state=State.ERROR , message=f"Command failed with error {e}."))
+                self.notify(Result.error(message=f"Command failed with error {e}."))
 
     def quit(self):
         if self.hardware_good:
