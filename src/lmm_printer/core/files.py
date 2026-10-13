@@ -31,9 +31,9 @@ def return_RM_Drives():
     walk(tree["blockdevices"])
 
     if len(drives) == 0:
-        drives = Result(value = None , state = State.ERROR , message = "No removable drives found.")
+        drives = Result.error(message = "No removable drives found.")
     else:
-        drives = Result(value = drives , state = State.SUCCESS , message = "Found drives: " + ", ".join(mnt for dev , mnt in drives))
+        drives = Result.success(value = drives , message = "Found drives: " + ", ".join(mnt for dev , mnt in drives))
     return drives
 
 def get_Files(drives):
