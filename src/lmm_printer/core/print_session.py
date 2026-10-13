@@ -88,7 +88,7 @@ class Print_Session:
 
     def load_Print_File(self , file):
         load_result = self.get_Print_File_Attributes(file)
-        if load_result.bad: return Result.error(message=f"Error loading file attributes. Error was: {load_result.message}.")
+        if load_result.bad: return load_result
         self.file = file
         self.num_layers = load_result.value["num_layers"]
         self.options = load_result.value["options"]
@@ -257,9 +257,14 @@ class Print_Session:
     def quit(self):
         if self.printer is not None:
             self.should_go = False
-            self.printer.safe_Shutdown()
+            try:
+                self.printer.safe_Shutdown()
+                return Result.success(message="Printer safely shut down and session quit.")
+            except Exception as e:
+                return Result.error(message=f"Printer could not be shutdown safely. Unknown if the heaters are still on. Session quit. Error was: {e}")
         else:
             self.should_go = False
+            return Result.success(message=f"Session quit.")
 
     def request_Stop(self):
         self.stop_print = True

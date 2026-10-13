@@ -200,7 +200,7 @@ class UI(Generic_UI):
             print_session (Print_Session): The current print session.
         """
 
-        print_session.quit()
+        self.notify(print_session.quit())
 
     def _home(self , print_session , args):
         """
