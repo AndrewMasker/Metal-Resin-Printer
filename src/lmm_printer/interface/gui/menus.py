@@ -8,8 +8,9 @@ class Menu_Frame:
     cursor: int = 0
 
 class Menu_Handler():
-    def __init__(self , init_menu):
-        self.menu_stack = Menu_Frame(menu=init_menu)
+    def __init__(self , init_menu , notify):
+        self.menu_stack = [Menu_Frame(menu=init_menu)]
+        self.notify = notify
 
     def get_Current(self):
         menu = self.menu_stack[-1].menu
@@ -17,15 +18,8 @@ class Menu_Handler():
         item = menu[cursor] if cursor < len(menu) else None
         return menu , cursor , item
 
-    def set_Current(self , cursor = None , item = None):
-        menu , current_cursor , _ = self.get_Current()
-        if item:
-            if cursor < len(menu):
-                self.menu_stack[-1].menu[cursor] = item
-            else:
-                raise IndexError(f"Cursor value of {cursor} is outside of bounds for menu with length {len(menu)}.")
-        if cursor is not None:
-            self.menu_stack[-1].cursor = cursor
+    def set_Cursor(self , cursor):
+        self.menu_stack[-1].cursor = cursor
         
     def do_Input(self , turns , pressed):
         result = self._make_Cursor_Valid()
@@ -39,7 +33,9 @@ class Menu_Handler():
         if item_type == m.Item_Type.NUM_SELECT:
             self._num_Select(turns , pressed)
         elif item_type == m.Item_Type.LEAF:
-            self._leaf(turns , pressed)
+            result = self._leaf(turns , pressed)
+            if result.bad:
+                self.notify()
 
     def _num_Select(self , turns , pressed):
         _ , _ , item = self.get_Current()
@@ -67,7 +63,7 @@ class Menu_Handler():
     def _navigate(self , turns):
         _ , cursor , _ = self.get_Current()
         cursor = cursor + turns
-        self.set_Current(cursor=cursor)
+        self.set_Cursor(cursor=cursor)
         self._make_Cursor_Valid(down = turns>0)
 
     def _make_Cursor_Valid(self , down = True):
