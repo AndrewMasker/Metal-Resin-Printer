@@ -1,5 +1,5 @@
-import menu_items as m
-from core.types import Result
+from lmm_printer.interface.gui import menu_items as m
+from lmm_printer.core.types import Result
 from dataclasses import dataclass
 
 @dataclass
@@ -9,7 +9,7 @@ class Menu_Frame:
 
 class Menu_Handler():
     def __init__(self , init_menu):
-        self.menu_stack = [init_menu]
+        self.menu_stack = Menu_Frame(menu=init_menu)
 
     def get_Current(self):
         menu = self.menu_stack[-1].menu
@@ -18,13 +18,13 @@ class Menu_Handler():
         return menu , cursor , item
 
     def set_Current(self , cursor = None , item = None):
-        menu , cursor , _ = self.get_Current()
+        menu , current_cursor , _ = self.get_Current()
         if item:
             if cursor < len(menu):
                 self.menu_stack[-1].menu[cursor] = item
             else:
                 raise IndexError(f"Cursor value of {cursor} is outside of bounds for menu with length {len(menu)}.")
-        if cursor:
+        if cursor is not None:
             self.menu_stack[-1].cursor = cursor
         
     def do_Input(self , turns , pressed):
@@ -48,27 +48,29 @@ class Menu_Handler():
                 item.editing = False
                 return
             item.value += turns * item.step
-            self.set_Current(item=item)
         else:
+            if pressed: item.editing = True; return
             self._navigate(turns)
 
     def _leaf(self , turns , pressed):
         if pressed:
             _ , _ , item = self.get_Current()
             try: 
+                item.action()
                 return Result.success()
             except Exception as e:
-                return Result.error(message=f"Error doing {item.name}. Error was: {e}.")
+                return Result.error(message=f"Error doing {item.label}. Error was: {e}.")
         else:
-            self._navigate()
+            self._navigate(turns)
             return Result.success()
 
     def _navigate(self , turns):
         _ , cursor , _ = self.get_Current()
         cursor = cursor + turns
         self.set_Current(cursor=cursor)
+        self._make_Cursor_Valid(down = turns>0)
 
-    def _make_Cursor_Valid(self):
+    def _make_Cursor_Valid(self , down = True):
         menu , cursor , _ = self.get_Current()
 
         num_items = len(menu)
@@ -76,16 +78,20 @@ class Menu_Handler():
         def put_In_Menu(cursor):
             if cursor >= num_items:
                 cursor = 0
+            if cursor < 0:
+                cursor = num_items - 1
             return cursor
 
         cursor = put_In_Menu(cursor)
+        increment = 1 if down == True else -1
 
         for _ in range(num_items):
             if menu[cursor].cursor:
                 break
             else:
-                cursor += 1
+                cursor += increment
                 cursor = put_In_Menu(cursor)
+        else:
             return Result.error(message="The menu at the end of the stack has no valid cursor locations.")
 
         self.menu_stack[-1] = Menu_Frame(menu=menu , cursor=cursor)
@@ -95,9 +101,9 @@ def main_Menu(print_session):
 
     title = m.Title("Main Menu")
     num_select = m.Num_Select("Select Number: " , step = .5)
-    print = m.Leaf("Print")
+    print_item = m.Leaf("Print")
 
-    print.action = lambda: print(num_select.value)
+    print_item.action = lambda: print(num_select.value)
 
-    return [title , num_select , print]
+    return [title , num_select , print_item]
     

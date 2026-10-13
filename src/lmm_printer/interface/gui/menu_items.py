@@ -40,11 +40,11 @@ class Title(Item):
 
 @dataclass
 class Num_Select(Editiable_Item):
-    i_type = Item_Type.NUM_SELECT
-    value = 0
-    step = 1
+    i_type: Item_Type = Item_Type.NUM_SELECT
+    value: float = 0
+    step: float = 1
     
 @dataclass
 class Check_Box(Editiable_Item):
-    i_type = Item_Type.CHECK_BOX
-    is_checked = False
+    i_type: Item_Type = Item_Type.CHECK_BOX
+    is_checked: bool = False
