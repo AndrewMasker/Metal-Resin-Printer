@@ -1,4 +1,4 @@
-from lmm_printer.core.types import Result
+from lmm_printer.core.types import Result , Move_Method , NUM_AXES , AXIS_NAMES , Session_Status
 
 class Print_Session:
     """
@@ -26,10 +26,13 @@ class Print_Session:
         self.args = args
         self.config = config
         self._add_State_File_To_Config()
-        self.file_good = False
-        self.stop_print = False
         self.should_go = True
-        self.hardware_good = False
+
+        self.printer = None
+        self.file = None
+        self.num_layers = None
+        self.printing = False
+        self.current_layer = None
 
         if args.gui:
             from lmm_printer.interface.gui.ui import UI
@@ -85,9 +88,6 @@ class Print_Session:
                 self.notify("Last shutdown was not safe. Ensure you home if you do not trust the axes' positions. ")
             else:
                 self.notify("Ensure you trust the axes' positions before starting.Home if you do not. ")
-            self.hardware_good = True
-        else:
-            self.hardware_good = False
 
     def load_Print_File(self , file):
         self.file = file
@@ -120,80 +120,71 @@ class Print_Session:
 
         self.num_layers = num_layers
         self.options = options_result.value
-        self.file_good = True
 
     def home(self , axis_ids = None):
-        if not self.hardware_good:
-            return Result.error(message=f"Hardware is not good.")
         if not axis_ids:
-            try:
-                self.printer.home_Axes() 
+            axis_ids = list(range(NUM_AXES))
+        axis_ids = list(set(axis_ids))
+        axis_ids = [a for a in axis_ids if 0 <= a < NUM_AXES]
+
+        if axis_ids:
+            def action():
+                self.printer.home_Axes(axis_ids)
                 self.printer.save_State()
-                return Result.success(message="All axes homed successfully.")
-            except Exception as e:
-                self.printer.save_State()
-                return Result.error(message=f"Error homing all axes. Error was: {e}.")
+            description = f"Home axes: {[AXIS_NAMES(axis_id) for axis_id in axis_ids]}."
+            return self._hardware_Action(description , action)
         else:
-            axis_ids = list(set(axis_ids))
-            axis_ids = [a for a in axis_ids if 0 <= a < 3]
-            if axis_ids:
-                try:
-                    self.printer.home_Axes(axis_ids)
-                    self.printer.save_State()
-                    return Result.success(message=f"Axes {axis_ids} homed successfully.")
-                except Exception as e:
-                    self.printer.save_State()
-                    return Result.error(message=f"Error homing axes {axis_ids}. Error was: {e}.")
-            else:
-                return Result.error(message="No valid axes input.")
+            return Result.error(message="No valid axes input.")
 
     def move(self , axis_id , method , amount=None):
-        if not self.hardware_good:
-            return Result.error(message=f"Hardware is not good.")
-        if not 0 <= axis_id < 3:
+        if not 0 <= axis_id < NUM_AXES:
             return Result.error(message=f"Error moving axis {axis_id}. Axis out of range.")
-        if method == "top":
-            try:
+
+        def action():
+            if method == Move_Method.TOP:
                 self.printer.move_Axis_To_Top(axis_id)
-                self.printer.save_State()
-                return Result.success(message=f"Successfully moved {axis_id} to top.")
-            except Exception as e:
-                return Result.error(message=f"Error moving axis {axis_id} to top. Error was {e}")
-        elif method == "absolute":
-            try:
+            elif method == Move_Method.ABSOLUTE:
                 self.printer.move_Axis_Absolute(axis_id , amount)
-                self.printer.save_State()
-                return Result.success(message=f"Successfully moved {axis_id} to {amount} absolutely.")
-            except Exception as e:
-                return Result.error(message=f"Error moving axis {axis_id} to {amount} absolutely. Error was {e}")
-        elif method == "relative":
-            try:
+            elif method == Move_Method.RELATIVE:
                 self.printer.move_Axis_Relative(axis_id , amount)
-                self.printer.save_State()
-                return Result.success(message=f"Successfully moved {axis_id} by {amount} relatively.")
-            except Exception as e:
-                return Result.error(message=f"Error moving axis {axis_id} by {amount} relatively. Error was {e}")
-        else:
-            return Result.error(message=f"Error moving with method {method}. Unknown method.")
+            self.printer.save_State()
+
+        if method == Move_Method.TOP:
+            description = f"Move {AXIS_NAMES(axis_id)} to top."
+        elif method == Move_Method.ABSOLUTE:
+            description = f"Move {AXIS_NAMES(axis_id)} to {amount} (absolute)."
+        elif method == Move_Method.RELATIVE:
+            description = f"Move {AXIS_NAMES(axis_id)} by {amount} (relative)."
+        
+        return self._hardware_Action(description , action)
 
     def get_Positions(self):
-        try:
+        def action():
             pos = []
-            for axis_id in range(3):
+            for axis_id in range(NUM_AXES):
                 pos.append(self.printer.get_Axis_Position(axis_id))
-            return Result.success(message = "Successfully got positions" , value = pos)
-        except Exception as e:
-            return Result.error(message = f"Error getting positions. Error was {e}.")
+            return pos
+        description = f"Getting positions."
+        return self._hardware_Action(description , action)
 
     def get_Temps(self):
-        try:
+        def action():
             temps = {}
             temps["Chamber"] = self.printer.get_Temp(0)
             temps["Recoater Heater"] = self.printer.get_Temp(1)
             temps["Recoater Front"] = self.printer.get_Temp(2)
-            return Result.success(message = f"Successfully got temps." , value = temps)
+            return temps
+        description = f"Getting temps."
+        return self._hardware_Action(description , action)
+    
+    def _hardware_Action(self , description , action):
+        if self.printer is None:
+            return Result.error("Printer hardware not connected.")
+        try:
+            value = action()
         except Exception as e:
-            return Result.error(message = f"Error getting temp. Error was {e}")
+            return Result.error(f"{description}: failed. Error was: {e}.")
+        return Result.success(message=f"{description}: done." , value=value)
 
     def get_Files(self):
         from lmm_printer.core.files import return_RM_Drives , get_Files
@@ -201,8 +192,8 @@ class Print_Session:
         if drives_result.bad:
             return drives_result
         drives = drives_result.value
-        file_names , file_mnts = get_Files(drives)
-        return Result.success(value = (file_names , file_mnts))
+        files = get_Files(drives)
+        return Result.success(value = files)
 
     def print(self):
         """
@@ -214,46 +205,42 @@ class Print_Session:
         from lmm_printer.core.types import Print_File
         from lmm_printer.utils.vendored_handling import silence
 
-        if not self.hardware_good:
-            self.notify("Cannot start a print with bad hardware or connection. ")
-            return
-        if not self.file_good:
-            self.notify("You must load a file before printing. ")
-            return
+        if self.printer is None: return Result.error("Cannot start a print with bad hardware or connection. ")
+        if self.file is None: return Result.error("You must load a file before printing. ")
+
+        self.stop_print = False
+        self.printing = True
         
         self.ui.start_Poll_During_Print()
-        self.printer.start_Heaters()
+
         try:
+            self.printer.start_Heaters()
             for i in range(1 , self.num_layers + 1):
+                self.current_layer = i
                 while not self.stop_print:
                     self.ui.poll_During_Print(self)
                     if self.printer.check_Heaters():
                         break
-                self.ui.poll_During_Print(self)
-                if self.stop_print:
-                    self.stop_print = False
-                    return
+                if self.stop_print: return Result.success("Print stopped.")
+
                 with Print_File(self.file) as print_file:
-                    if i == self.num_layers:
-                        next_image = None
-                    else:
-                        next_image = print_file.get_Image(i + 1).value
-                        
+                    if i == self.num_layers: next_image = None
+                    else: next_image = print_file.get_Image(i + 1).value 
                     if i == 1:
-                        this_image = print_file.get_Image(i).value
-                        self.printer.init_Print(this_image , self.options)
-                        # with silence():
-                        #     self.printer.projector.send_pixeldata_to_buffer(this_image , 0 , 0)
+                        first_image = print_file.get_Image(i).value
+                        self.printer.init_Print(first_image , self.options)
 
                 start_time = monotonic()
                 self.printer.do_Current_Layer(next_image , self.options)
                 end_time = monotonic()
                 self.notify("Layer " + str(i) + " of " + str(self.num_layers) + " done. Took: " + str(end_time - start_time) + " seconds.")
+            return Result.success("Print complete.")
         except Exception as e:
-            self.stop_Print()
-            self.notify(f"Error during print. Error was: {e}")
+            return Result.error(f"Print failed on layer {self.current_layer}. Error was: {e}.")
+        finally:
+            self.printing = False
+            self._make_safe
 
-        
     def go(self):
         """
         Starts accepting commands and proceeds until the should_go flag is set to False.
@@ -268,14 +255,34 @@ class Print_Session:
                 self.notify(Result.error(message=f"Command failed with error {e}."))
 
     def quit(self):
-        if self.hardware_good:
+        if self.printer is not None:
             self.printer.safe_Shutdown()
             self.should_go = False
         else:
             self.should_go = False
 
-    def stop_Print(self):
-        self.notify("Shutting down.")
-        self.printer.stop_Active()
-        self.printer.save_State()
+    def request_Stop(self):
         self.stop_print = True
+
+    def _make_safe(self):
+        try:
+            self.printer.stop_Active()
+        except Exception as e:
+            self.notify(Result.error(f"Could not confirm heaters are off. Error was: {e}."))
+        try:
+            self.printer.save_State()
+        except Exception as e:
+            pass
+
+    def get_Status(self):
+        session_status = Session_Status()
+        if self.printer is not None:
+            session_status.hardware_connected = True
+        if self.file is not None:
+            session_status.file_name = self.file.name
+            session_status.num_layers = self.num_layers
+        if self.printing:
+            session_status.printing = self.printing
+            session_status.current_layer = self.current_layer
+        return session_status
+        

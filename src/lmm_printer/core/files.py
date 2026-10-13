@@ -48,15 +48,13 @@ def get_Files(drives):
         file_mnts (list): A list of mounts asscociated with the files of file_names.
     """
 
-    file_names = []
-    file_mnts = []
+    files = []
     for dev , mnt in drives:
         root = Path(mnt)
         for file in root.iterdir():
-            file_names.append(file.name)
-            file_mnts.append(mnt)
+            files.append(file)
 
-    return file_names , file_mnts
+    return files
 
 def save_Dict(path , data):
     """

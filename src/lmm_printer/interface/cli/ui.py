@@ -1,6 +1,6 @@
 import sys , select
 from lmm_printer.interface.ui import Generic_UI
-from lmm_printer.core.types import Result
+from lmm_printer.core.types import Result , Move_Method , AXIS_NAMES
 
 class UI(Generic_UI):
     def start(self):
@@ -155,12 +155,15 @@ class UI(Generic_UI):
         if files_result.bad:
             self.notify(files_result)
             return
-        file_names , _ = files_result.value
-        if file_names:
+        files = files_result.value
+        if files:
             print("")
-            print("Available Files")
-            for file_name in file_names:
-                print(file_name)
+            print("Available Files:")
+            for file in files:
+                print(file.name)
+        else:
+            print("")
+            print("No Files Found.")
 
     def _choose_File(self , print_session , args):
         """
@@ -171,25 +174,25 @@ class UI(Generic_UI):
             print_session (Print_Session): The print session to load the chosen file into.
         """
 
-        from pathlib import Path
+        if not args:
+            print("Enter a file to choose. ")
+            return
 
         files_result = print_session.get_Files()
         if files_result.bad:
             self.notify(files_result)
             return
-        file_names , file_mnts = files_result.value
-        if not args:
-            print("Enter a file to choose. ")
-            return
+        files = files_result.value
+        file_names = [file.name for file in files]
+
         file_name = args[0]
         if file_name in file_names:
             index = file_names.index(file_name)
-            mnt = file_mnts[index]
-            file_result = Result.success(value = Path(mnt) / file_name , message = "Successfully chose file: " + file_name + ", at mount: " + mnt + ".")
+            file_result = Result.success(value = files[index] , message = f"Successfully chose file: {file_name} with path {files[index]}.")
             self.notify(file_result)
             print_session.load_Print_File(file_result.value)
         else:
-            print("File name not found. Did you include the extension?")
+            self.notify("File name not found. Did you include the extension?")
 
     def _quit(self , print_session):
         """
@@ -231,16 +234,33 @@ class UI(Generic_UI):
             print_session (Print_Session): The print session to act upon.
         """
         trace_error = "Use a correct trace. Enter 'help' for a list of commands with their traces."
-        if not args or len(args)<2 or not args[0].isdigit():
+        if not args or len(args)<2:
             print(trace_error); return
-        axis_id , method , amount = int(args[0]) , args[1] , None
-        if method in ("relative" , "absolute"):
+        axis_id , method , amount = args[0] , args[1].lower() , None
+
+        if not axis_id.isdigit():
+            if axis_id in AXIS_NAMES:
+                axis_id = AXIS_NAMES.index(axis_id)
+            else:
+                self.notify(f"Axis id is not an integer or one of the following {AXIS_NAMES}.")
+        else:
+            axis_id = int(axis_id)
+
+        if method == "relative":
+            method = Move_Method.RELATIVE
+        elif method == "absolute":
+            method = Move_Method.ABSOLUTE
+        elif method == "top":
+            method = Move_Method.TOP
+
+        if method in (Move_Method.RELATIVE , Move_Method.ABSOLUTE):
             if len(args)<3: print(trace_error); return
             try: amount = float(args[2])
             except ValueError: print(trace_error); return
-        elif method != "top":
-            try: amount = float(args[1]); method = "relative"
+        elif method != Move_Method.TOP:
+            try: amount = float(args[1]); method = Move_Method.RELATIVE
             except ValueError: print(trace_error); return
+
         self.notify(print_session.move(axis_id , method , amount))
 
     def _get_Pos(self , print_session):
@@ -303,7 +323,7 @@ class UI(Generic_UI):
                     break
                     
         elif inp == "q":
-            print_session.stop_Print()
+            print_session.request_Stop()
 
         elif inp == "t":
             result = print_session.get_Temps()

@@ -105,3 +105,19 @@ class Print_File:
 
     def __exit__(self , *exc):
         self.close()
+
+class Move_Method(Enum):
+    RELATIVE = "relative"
+    ABSOLUTE = "absolute"
+    TOP = "top"
+
+AXIS_NAMES = ("Reservoir" , "Build" , "Recoater")
+NUM_AXES = len(AXIS_NAMES)
+
+@dataclass
+class Session_Status:
+    hardware_connected: bool = False
+    file_name: str = None
+    num_layers: int = None
+    printing: bool = False
+    current_layer: int = None
