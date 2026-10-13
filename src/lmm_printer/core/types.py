@@ -54,9 +54,9 @@ class NanoDLP_File:
             image = np.array(image)
             image = image.reshape(image.shape[0] , image.shape[1]*3)
             image = np.flip(image , axis = 0)
-            return Result(value = image , state = State.SUCCESS , message = "Successfully decoded image.")
+            return Result.success(value = image , message = "Successfully decoded image.")
         except Exception as e:
-            return Result(value = None , state = State.ERROR , message = "Likely one of the image dimensions isn't divisible by 3 (for nanodlp). Try to flip axes in slicer. Error was: " + str(e)) 
+            return Result.error(message = "Likely one of the image dimensions isn't divisible by 3 (for nanodlp). Try to flip axes in slicer. Error was: " + str(e)) 
 
     def get_Num_Layers(self):
         return len([
@@ -71,9 +71,9 @@ class NanoDLP_File:
             with self._zip.open("profile.json") as f:
                 profile = json.load(f)
             options = {"exposure_time": profile["CureTime"] , "layer_thickness": options["Thickness"]*.001}
-            return Result(value = options , state = State.SUCCESS , message = "Successfully loaded options.")
+            return Result.success(value = options , message = "Successfully loaded options.")
         except Exception as e:
-            return Result(value = None , state = State.ERROR , message = "Couldn't open options.json. Error was: " + str(e))
+            return Result.error(message = "Couldn't open options.json. Error was: " + str(e))
 
     def close(self):
         self._zip.close()
