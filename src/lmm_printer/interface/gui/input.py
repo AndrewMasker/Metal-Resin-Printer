@@ -1,5 +1,5 @@
 import evdev
-from evdev import encodes
+from evdev import ecodes
 
 class Encoder_Input:
     def __init__(self):
@@ -7,9 +7,11 @@ class Encoder_Input:
         for path in evdev.list_devices():
             dev = evdev.InputDevice(path)
             caps = dev.capabilities()
-            if encodes.EV_REL in caps or encodes.KEY_ENTER in caps.get(encodes.EV_KEY , []):
+            if ecodes.EV_REL in caps or ecodes.KEY_ENTER in caps.get(ecodes.EV_KEY , []):
                 dev.grab()
                 self.devices.append(dev)
+            else:
+                dev.close()
 
     def read(self):
         """Reads the inputs.
@@ -23,10 +25,15 @@ class Encoder_Input:
         for dev in self.devices:
             try:
                 for e in dev.read():
-                    if e.type == encodes.EV_REL:
-                        turns = e.value
-                    elif e.type == encodes.EV_KEY and e.code == encodes.KEY_ENTER and e.value == 1:
+                    if e.type == ecodes.EV_REL and e.code == ecodes.REL_X:
+                        turns += e.value
+                    elif e.type == ecodes.EV_KEY and e.code == ecodes.KEY_ENTER and e.value == 1:
                         pressed = True
             except BlockingIOError:
                 pass
         return turns , pressed
+
+    def close(self):
+        for dev in self.devices:
+            dev.ungrab()
+            dev.close()
