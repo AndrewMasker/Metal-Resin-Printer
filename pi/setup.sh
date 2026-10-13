@@ -102,6 +102,10 @@ if [[ -d /sys/module/panel_mipi_dbi ]]; then
 fi
 echo "Display driver has been installed."
 
+# Give the user access to the framebuffer.
+usermod -aG video,input $SUDO_USER
+echo "User given framebuffer access."
+
 # Commands that must be run to ensure everything works properly
 systemctl disable hciuart 2>/dev/null || true
 echo "Required commands have been run."
