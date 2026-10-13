@@ -213,7 +213,7 @@ class Printer:
         GPIO.cleanup()
 
     def stop_Active(self):
-        with silence():
-            self.projector.stop_exposure()
         self.set_Heater(0 , 0)
         self.set_Heater(1 , 0)
+        with silence():
+            self.projector.stop_exposure()

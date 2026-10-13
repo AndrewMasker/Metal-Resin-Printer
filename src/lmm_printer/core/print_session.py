@@ -67,10 +67,7 @@ class Print_Session:
 
         teensy_result = return_Teensy_Serial(self.config["teensy"]["vid"] , self.config["teensy"]["baudrate"] , self.config["teensy"]["timeout"] , self.config["teensy"]["enable_fallback"])
         self.notify(teensy_result)
-        if teensy_result.bad:
-            teensy_loaded = False
-        else:
-            teensy_loaded = True
+        teensy_loaded = teensy_result.good
         teensy = teensy_result.value
 
         projector_result = return_Projector(self.config["projector"]["spi_max_speed"])
@@ -90,39 +87,34 @@ class Print_Session:
                 self.notify("Ensure you trust the axes' positions before starting.Home if you do not. ")
 
     def load_Print_File(self , file):
+        load_result = self.load_Print_File_Attributes(file)
+        if load_result.bad: return Result.error(message=f"Error loading file attributes. Error was: {load_result.message}.")
         self.file = file
-        self.load_Print_File_Attributes()
+        self.num_layers = load_result.value["num_layers"]
+        self.options = load_result.value["options"]
+        return Result.success(message=f"Successfully loaded {file}.")
 
-    def load_Print_File_Attributes(self):
+    def get_Print_File_Attributes(self , file):
         """
         Loads the print file attributes.
         """
 
         from lmm_printer.core.types import Print_File
 
-        if not hasattr(self , "file"):
-            self.notify("Choose a file first. ")
-            return
-        with Print_File(self.file) as print_file:
+        with Print_File(file) as print_file:
             num_layers = print_file.get_Num_Layers()
             image_result = print_file.get_Image(1)
             options_result = print_file.get_Options()
-        
-        print_file_error = False
-        if image_result.bad:
-            self.notify(image_result)
-            print_file_error = True
-        if options_result.bad:
-            self.notify(options_result)
-            print_file_error = True
-        if print_file_error:
-            return
 
-        self.num_layers = num_layers
-        self.options = options_result.value
+        if image_result.bad:
+            return image_result
+        if options_result.bad:
+            return options_result
+
+        return Result.success({"num_layers":num_layers , "options": options_result.value})
 
     def home(self , axis_ids = None):
-        if not axis_ids:
+        if axis_ids is None:
             axis_ids = list(range(NUM_AXES))
         axis_ids = list(set(axis_ids))
         axis_ids = [a for a in axis_ids if 0 <= a < NUM_AXES]
@@ -131,7 +123,7 @@ class Print_Session:
             def action():
                 self.printer.home_Axes(axis_ids)
                 self.printer.save_State()
-            description = f"Home axes: {[AXIS_NAMES(axis_id) for axis_id in axis_ids]}."
+            description = f"Home axes: {[AXIS_NAMES[axis_id] for axis_id in axis_ids]}"
             return self._hardware_Action(description , action)
         else:
             return Result.error(message="No valid axes input.")
@@ -139,6 +131,10 @@ class Print_Session:
     def move(self , axis_id , method , amount=None):
         if not 0 <= axis_id < NUM_AXES:
             return Result.error(message=f"Error moving axis {axis_id}. Axis out of range.")
+        if not isinstance(method , Move_Method):
+            return Result.error(message=f"Method {method} is not of type Move_Method.")
+        if method in (Move_Method.RELATIVE , Move_Method.ABSOLUTE) and amount is None:
+            return Result.error(message=f"Move method {method} requires and amount.")
 
         def action():
             if method == Move_Method.TOP:
@@ -150,11 +146,11 @@ class Print_Session:
             self.printer.save_State()
 
         if method == Move_Method.TOP:
-            description = f"Move {AXIS_NAMES(axis_id)} to top."
+            description = f"Move {AXIS_NAMES[axis_id]} to top"
         elif method == Move_Method.ABSOLUTE:
-            description = f"Move {AXIS_NAMES(axis_id)} to {amount} (absolute)."
+            description = f"Move {AXIS_NAMES[axis_id]} to {amount} (absolute)"
         elif method == Move_Method.RELATIVE:
-            description = f"Move {AXIS_NAMES(axis_id)} by {amount} (relative)."
+            description = f"Move {AXIS_NAMES[axis_id]} by {amount} (relative)"
         
         return self._hardware_Action(description , action)
 
@@ -164,7 +160,7 @@ class Print_Session:
             for axis_id in range(NUM_AXES):
                 pos.append(self.printer.get_Axis_Position(axis_id))
             return pos
-        description = f"Getting positions."
+        description = f"Getting positions"
         return self._hardware_Action(description , action)
 
     def get_Temps(self):
@@ -174,7 +170,7 @@ class Print_Session:
             temps["Recoater Heater"] = self.printer.get_Temp(1)
             temps["Recoater Front"] = self.printer.get_Temp(2)
             return temps
-        description = f"Getting temps."
+        description = f"Getting temps"
         return self._hardware_Action(description , action)
     
     def _hardware_Action(self , description , action):
@@ -225,7 +221,11 @@ class Print_Session:
 
                 with Print_File(self.file) as print_file:
                     if i == self.num_layers: next_image = None
-                    else: next_image = print_file.get_Image(i + 1).value 
+                    else: 
+                        next_image_result = print_file.get_Image(i + 1)
+                        if next_image_result.bad:
+                            raise RuntimeError(next_image_result.message)
+                        next_image = next_image_result.value
                     if i == 1:
                         first_image = print_file.get_Image(i).value
                         self.printer.init_Print(first_image , self.options)
@@ -239,7 +239,7 @@ class Print_Session:
             return Result.error(f"Print failed on layer {self.current_layer}. Error was: {e}.")
         finally:
             self.printing = False
-            self._make_safe
+            self._make_safe()
 
     def go(self):
         """
@@ -256,8 +256,8 @@ class Print_Session:
 
     def quit(self):
         if self.printer is not None:
-            self.printer.safe_Shutdown()
             self.should_go = False
+            self.printer.safe_Shutdown()
         else:
             self.should_go = False
 

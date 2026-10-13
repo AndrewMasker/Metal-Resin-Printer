@@ -129,7 +129,7 @@ class UI(Generic_UI):
         elif command == "getpos":
             self._get_Pos(print_session)
         elif command == "print":
-            print_session.print()
+            self.notify(print_session.print())
         elif command is None:
             return
         else:
@@ -243,6 +243,7 @@ class UI(Generic_UI):
                 axis_id = AXIS_NAMES.index(axis_id)
             else:
                 self.notify(f"Axis id is not an integer or one of the following {AXIS_NAMES}.")
+                return
         else:
             axis_id = int(axis_id)
 
@@ -274,7 +275,7 @@ class UI(Generic_UI):
         result = print_session.get_Positions()
         if result.good:
             for axis_id , pos in enumerate(result.value):
-                print(f"Axis id {axis_id}: {pos} mm.")
+                print(f"{AXIS_NAMES[axis_id]}: {pos} mm.")
         else:
             self.notify(result)
 

@@ -111,7 +111,7 @@ class Move_Method(Enum):
     ABSOLUTE = "absolute"
     TOP = "top"
 
-AXIS_NAMES = ("Reservoir" , "Build" , "Recoater")
+AXIS_NAMES = ("reservoir" , "build" , "recoater")
 NUM_AXES = len(AXIS_NAMES)
 
 @dataclass
