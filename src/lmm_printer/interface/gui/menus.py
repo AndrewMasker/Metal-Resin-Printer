@@ -35,7 +35,13 @@ class Menu_Handler():
         elif item_type == m.Item_Type.LEAF:
             result = self._leaf(turns , pressed)
             if result.bad:
-                self.notify()
+                self.notify(result)
+        elif item_type == m.Item_Type.BRANCH:
+            self._branch(turns , pressed)
+        elif item_type == m.Item_Type.CHECKBOX:
+            self._checkbox(turns , pressed)
+        else:
+            self._navigate(turns)
 
     def _num_Select(self , turns , pressed):
         _ , _ , item = self.get_Current()
@@ -59,6 +65,30 @@ class Menu_Handler():
         else:
             self._navigate(turns)
             return Result.success()
+
+    def _branch(self , turns , pressed):
+        if pressed:
+            _ , _ , item = self.get_Current()
+            menu = item.submenu()
+            menu_frame = Menu_Frame(menu=menu)
+            self.menu_stack.append(menu_frame)
+        else:
+            self._navigate(turns)
+
+    def _checkbox(self , turns , pressed):
+        _ , _ , item = self.get_Current()
+        if item.editing:
+            if pressed:
+                item.editing = False
+                return
+            if turns:
+                item.is_checked = not item.is_checked
+                return
+        else:
+            if pressed:
+                item.editing = True
+                return
+            self._navigate(turns)
 
     def _navigate(self , turns):
         _ , cursor , _ = self.get_Current()

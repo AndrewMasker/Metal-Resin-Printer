@@ -11,7 +11,7 @@ class Item_Type(Enum):
     BRANCH = "branch"
     TITLE = "title"
     NUM_SELECT = "num_select"
-    CHECK_BOX = "check_box"
+    CHECKBOX = "checkbox"
 
 @dataclass
 class Item(Generic[T]):
@@ -31,7 +31,6 @@ class Leaf(Item):
 @dataclass
 class Branch(Item):
     i_type: Item_Type = Item_Type.BRANCH
-    action: Callable = None
     submenu: Callable = None
 
 @dataclass
@@ -45,6 +44,6 @@ class Num_Select(Editiable_Item):
     step: float = 1
     
 @dataclass
-class Check_Box(Editiable_Item):
-    i_type: Item_Type = Item_Type.CHECK_BOX
+class Checkbox(Editiable_Item):
+    i_type: Item_Type = Item_Type.CHECKBOX
     is_checked: bool = False
