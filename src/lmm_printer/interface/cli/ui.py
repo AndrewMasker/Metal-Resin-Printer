@@ -188,9 +188,7 @@ class UI(Generic_UI):
         file_name = args[0]
         if file_name in file_names:
             index = file_names.index(file_name)
-            file_result = Result.success(value = files[index] , message = f"Successfully chose file: {file_name} with path {files[index]}.")
-            self.notify(file_result)
-            print_session.load_Print_File(file_result.value)
+            self.notify(print_session.load_Print_File(files[index]))
         else:
             self.notify("File name not found. Did you include the extension?")
 

@@ -87,7 +87,7 @@ class Print_Session:
                 self.notify("Ensure you trust the axes' positions before starting.Home if you do not. ")
 
     def load_Print_File(self , file):
-        load_result = self.load_Print_File_Attributes(file)
+        load_result = self.get_Print_File_Attributes(file)
         if load_result.bad: return Result.error(message=f"Error loading file attributes. Error was: {load_result.message}.")
         self.file = file
         self.num_layers = load_result.value["num_layers"]
@@ -111,7 +111,7 @@ class Print_Session:
         if options_result.bad:
             return options_result
 
-        return Result.success({"num_layers":num_layers , "options": options_result.value})
+        return Result.success(value={"num_layers":num_layers , "options": options_result.value})
 
     def home(self , axis_ids = None):
         if axis_ids is None:
@@ -134,7 +134,7 @@ class Print_Session:
         if not isinstance(method , Move_Method):
             return Result.error(message=f"Method {method} is not of type Move_Method.")
         if method in (Move_Method.RELATIVE , Move_Method.ABSOLUTE) and amount is None:
-            return Result.error(message=f"Move method {method} requires and amount.")
+            return Result.error(message=f"Move method {method} requires an amount.")
 
         def action():
             if method == Move_Method.TOP:
