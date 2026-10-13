@@ -1,25 +1,18 @@
 from lmm_printer.core.types import Result , Move_Method , NUM_AXES , AXIS_NAMES , Session_Status
 
 class Print_Session:
-    """
-    Holds functionality for running a print session.
-
-    Parameters:
-        args (dict): A dict of arguments from the command line call.
-        config (dict): A dict representation of the config file.
+    """Holds functionality for running a print session.
 
     Attributes:
         args (dict): This print session's arguments.
         config (dict): A representation of this print session's config file.
-        file_good (bool): Whether a file has been loaded along with its attributes.
+        ui (Generic_UI): The active user interface (could be cli or gui).
+        printer (Printer | None): The printer object for this print session.
+        file (Path | None): The path to the file currently selected.
+        num_layers (int | None): The number of layers in the loaded file.
+        options (dict | None): The options loaded from the file.
         stop_print (bool): A flag that stops an ongoing print.
         should_go (bool): A flag that tells the print session to continue polling for commands.
-        input_handler: An object that inherits from Generic_Input_Handler that handles inputs with specific functions.
-        print_input_handler: An object that inherits from Generic_Print_Input_Handler that handles inputs during printing.
-        output_handler: An object that inherits from Generic_Output_Handler that handles outputs with specific functions.
-        hardware_good (bool): Whether the hardware is properly loaded.
-        num_layers (int): The number of layers in the loaded file.
-        options (dict): The options loaded from the file.
     """
 
     def __init__(self , args , config):
@@ -33,6 +26,7 @@ class Print_Session:
         self.num_layers = None
         self.printing = False
         self.current_layer = None
+        self.options = None
 
         if args.gui:
             from lmm_printer.interface.gui.ui import UI

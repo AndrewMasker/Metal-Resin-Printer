@@ -2,17 +2,14 @@ import json , os , tempfile
 from dataclasses import fields , asdict
 import subprocess
 from pathlib import Path
-from lmm_printer.core.types import Result , State , Printer_State
+from lmm_printer.core.types import Result , Printer_State
 
 def return_RM_Drives():
-    """
-    Searches for and returns a result variable with the result of the process.
+    """Search for and return a result with drives or an error.
 
     Returns:
-        Result: A dataclass decribing the outcomes with fields:
-            value: The value of the result, In this case None or a list of the mount paths of the drives.
-            state (State): A State Enum of State.ERROR or State.SUCCESS depending on whether any drives were found.
-            message (str): A message to pass out of the function. 
+        Result: On success the value is a list of drives. On error,
+            the message says what failed.
     """
     out = subprocess.check_output(["lsblk" , "-J" , "-o" , "NAME,TYPE,RM,FSTYPE,MOUNTPOINT,PATH"] , text=True)
     tree = json.loads(out)
@@ -37,15 +34,13 @@ def return_RM_Drives():
     return drives
 
 def get_Files(drives):
-    """
-    Gets all of the files in a list of drives (mount paths).
+    """Get all of the files in a list of drives (mount paths).
 
-    Parameters:
+    Args:
         drives (list): A list of paths to the mount points of loaded removable drives.
 
     Returns:
-        file_names (list): A list of file names.
-        file_mnts (list): A list of mounts asscociated with the files of file_names.
+        list: List of file paths.
     """
 
     files = []
@@ -57,10 +52,9 @@ def get_Files(drives):
     return files
 
 def save_Dict(path , data):
-    """
-    Saves a dict to a path.
+    """Save a dict to a path.
 
-    Parameters:
+    Args:
         path (Path or str): The save path.
         data (dict): The dict to be saved.
     """
@@ -76,10 +70,9 @@ def save_Dict(path , data):
         raise
 
 def load_Dict(path):
-    """
-    Loads a dict from a path.
+    """Load a dict from a path.
 
-    Parameters:
+    Args:
         path (Path or str): The path to load from.
 
     Returns:
@@ -93,10 +86,9 @@ def load_Dict(path):
         raise
 
 def save_Printer_State(path , data):
-    """
-    Saves a Printer_State object as a dict.
+    """Save a Printer_State object as a dict.
 
-    Parameters:
+    Args:
         path (Path or str): The path to save to.
         data (Printer_State): The data to save.
     """
@@ -104,10 +96,9 @@ def save_Printer_State(path , data):
     save_Dict(path , asdict(data))
 
 def load_Printer_State(path):
-    """
-    Loads a Printer_State object from path.
+    """Load a Printer_State object from path.
 
-    Parameters:
+    Args:
         path (Path or str): The path to load from.
 
     Returns:
