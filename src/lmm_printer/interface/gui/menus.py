@@ -116,7 +116,7 @@ class Menu_Handler():
             item_offset = item_depth + offset
             rect = pygame.Rect(0 , item_offset , canvas_width , item_height)
             item_depth += item_height
-            if not canvas.get_rect.contains(rect): continue
+            if not canvas.get_rect().contains(rect): continue
             item.draw(canvas.subsurface(rect) , selected , themes)
             
         
