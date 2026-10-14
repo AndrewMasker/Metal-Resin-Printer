@@ -15,9 +15,14 @@ class Menu_Handler():
     def push(self , menu):
         menu_frame = Menu_Frame(menu=menu)
         self.menu_stack.append(menu_frame)
+        result = self._make_Cursor_Valid()
+        if result.bad:
+            self.notify(result)
+            self.pop()
 
-    def pop(self):
-        self.menu_stack.pop(index=-1)
+    def pop(self , index = -1):
+        if len(self.menu_stack)>1:
+            self.menu_stack.pop(index)
 
     def get_Current(self):
         menu = self.menu_stack[-1].menu
@@ -43,8 +48,8 @@ class Menu_Handler():
             result = item.on_Turns(turns)
             if result is not None and result.bad:
                 self.notify(result)
-        if not item.captured:
-            self._navigate(turns)
+            if not item.captured:
+                self._navigate(turns)
 
     def _navigate(self , turns):
         _ , cursor , _ = self.get_Current()

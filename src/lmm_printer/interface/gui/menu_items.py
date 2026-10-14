@@ -3,8 +3,6 @@ from collections.abc import Callable
 import pygame
 from lmm_printer.core.types import Result
 
-T = TypeVar("T")
-
 @dataclass
 class Theme:
     outline_t: int = 3
@@ -70,20 +68,19 @@ class Leaf(Item):
         try:
             return Result.success(value=self.action())
         except Exception as e:
-            return Result.error(message=f"Error doing action. Error was {e}.")
+            return Result.error(message=f"Error doing action of {self.label}. Error was {e}.")
         
-
 @dataclass(eq=False)
 class Branch(Item):
     sub_menu: Callable = None
 
     def on_Press(self , handler):
         try:
-            sub_menu = self.submenu()
+            sub_menu = self.sub_menu()
             handler.push(sub_menu)
             return Result.success()
         except Exception as e:
-            return Result.error(message=f"Error doing the action of {self.label}. Error was {e}.")
+            return Result.error(message=f"Error doing the pushing sub menu of {self.label}. Error was {e}.")
 
 @dataclass(eq=False)
 class Title(Item):
@@ -104,9 +101,9 @@ class Num_Select(Item):
         self.draw_Panel(canvas , theme)
         text = theme.font.render(self.label , True , theme.text_color)
         text_x , text_y = self.center(canvas , text)
-        canvas.blit(text , (theme.gap + theme.outline_t , text_y))
+        canvas.blit(text , (theme.gaps + theme.outline_t , text_y))
         value_text = theme.font.render(f"{self.value:.2f}" , True , theme.text_color)
-        canvas.blit(value_text , (2*theme.gap + theme.outline_t + text.get_width() , text_y))
+        canvas.blit(value_text , (2*theme.gaps + theme.outline_t + text.get_width() , text_y))
     
 @dataclass(eq=False)
 class Checkbox(Item):
@@ -122,9 +119,9 @@ class Checkbox(Item):
         box_size = theme.checkbox_size
         box_t = theme.checkbox_t
         button_size = theme.checkbox_button_size
-        gap = theme.gap
+        gaps = theme.gaps
         t = theme.outline_t
-        box_x = width - t - gap - 2*box_t - box_size
+        box_x = width - t - gaps - 2*box_t - box_size
         box_y = (height // 2) - (box_size // 2)  
         pygame.draw.rect(canvas , theme.checkbox_color , pygame.Rect(box_x , box_y , box_size , box_size) , width = box_t)
         if self.is_checked:
@@ -136,6 +133,11 @@ class Checkbox(Item):
         self.draw_Panel(canvas , theme)
         text = theme.font.render(self.label , True , theme.text_color)
         text_x , text_y = self.center(canvas , text)
-        canvas.blit(text , (theme.gap + theme.outline_t , text_y))
+        canvas.blit(text , (theme.gaps + theme.outline_t , text_y))
         self.draw_Checkbox(canvas , theme)
-        
+
+
+@dataclass
+class Back(Item):
+    def on_Press(self, handler):
+        handler.pop()
