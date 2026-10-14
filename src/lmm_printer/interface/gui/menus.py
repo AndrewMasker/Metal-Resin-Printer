@@ -1,5 +1,5 @@
 from lmm_printer.interface.gui import menu_items as m
-from lmm_printer.core.types import Result
+from lmm_printer.core.types import Result , NUM_AXES , AXIS_NAMES , Move_Method
 from dataclasses import dataclass
 import pygame
 
@@ -120,15 +120,67 @@ class Menu_Handler():
             item.draw(canvas.subsurface(rect) , selected , themes)
             
         
-        
+def main_Menu(print_session , menu_handler):
 
-def main_Menu(print_session):
+    title = m.Title("LMM Printer")
+    move = m.Branch("Move" , sub_menu=_move_Menu(print_session))
+    home = m.Branch("Home" , sub_menu=_home_Menu(print_session))
+    choose_file = m.Branch("Choose File" , sub_menu=_choose_File_Menu(print_session))
+    print_item = m.Leaf("Begin Print" , action=print_session.print())
+    quit_item = m.Leaf("Quit" , action=print_session.quit())
 
-    title = m.Title("Main Menu")
-    num_select = m.Num_Select("Select Number: " , step = .5)
-    print_item = m.Leaf("Print")
+    return [title , move , home , choose_file , print_item , quit_item]
 
-    print_item.action = lambda: print(num_select.value)
+def _move_Menu(print_session , menu_handler):
+    menu = []
+    menu.append(m.Title("Choose Axis to Move"))
+    for i in range(NUM_AXES):
+        menu.append(m.Branch(label=AXIS_NAMES[i].title() , sub_menu=lambda:_move_Method_Menu(print_session , menu_handler , i)))
+    menu.append(m.Leaf(label="Back" , action = menu_handler.pop))
+    return menu
 
-    return [title , num_select , print_item]
-    
+def _move_Method_Menu(print_session , menu_handler , axis_id):
+    title = m.Title(f"Choose method to move {AXIS_NAMES[axis_id]}")
+    absolute = m.Branch(label="Absolute" , sub_menu=lambda: _move_Axis_Menu(print_session , menu_handler , axis_id , Move_Method.ABSOLUTE))
+    relative = m.Branch(label="Absolute" , sub_menu=lambda: _move_Axis_Menu(print_session , menu_handler , axis_id , Move_Method.RELATIVE))
+    top = m.Branch(label="Absolute" , sub_menu=lambda: _move_Axis_Menu(print_session , menu_handler , axis_id , Move_Method.TOP))
+    back = m.Leaf(label="Back" , action = menu_handler.pop)
+    return [title , absolute , relative , top , back]
+
+def _move_Axis_Menu(print_session , menu_handler , axis_id , move_method):
+    title = m.Title(f"Move {AXIS_NAMES[axis_id]} {move_method.value}.")
+    go = m.Leaf(label="Go")
+    back = m.Leaf(label="Back" , action = menu_handler.pop)
+
+    if move_method is not Move_Method.TOP:
+        num_select = m.Num_Select(label="Choose Amount:" , value=0 , step=.5)
+        go.action = lambda: print_session.move(axis_id , move_method , num_select.value)
+        return [title , num_select , go , back]
+    else:
+        go.action = lambda: print_session.move(axis_id , move_method)
+        return [title , go , back]
+
+def _home_Menu(print_session , menu_handler):
+    menu = []
+    menu.append(m.Title("Choose Axes to Home"))
+    for i in range(NUM_AXES):
+        menu.append(m.Checkbox(label=AXIS_NAMES[i].title()))
+    menu.append(m.Leaf(label="Go" , action=lambda: print_session.home([i for i , item in enumerate(menu[1:]) if item.is_checked])))
+    menu.append(m.Leaf(label="Back" , action = menu_handler.pop))
+    return menu
+
+def _choose_File_Menu(print_session , menu_handler):
+    result = print_session.get_Files()
+    if result.bad:
+        menu_handler.notify(result)
+        return
+    files = result.value
+    if not files:
+        menu_handler.notify("No Files Found")
+        return
+    menu = []
+    menu.append(m.Title("Choose File"))
+    for file in files:
+        menu.append(m.Leaf(label=file.name , action=lambda: (print_session.load_Print_File(file) , menu_handler.pop())[0]))
+    menu.append(m.Leaf(label="Back" , action = menu_handler.pop))
+    return menu
