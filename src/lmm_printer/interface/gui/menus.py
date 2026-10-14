@@ -52,7 +52,7 @@ class Menu_Handler():
             result = item.on_Turn(turns)
             if not item.captured:
                 self._navigate(turns)
-        if result is not None and isinstance(result , Result) and result.message:
+        if isinstance(result , Result) and result.message:
             self.notify(result)
 
     def _navigate(self , turns):
