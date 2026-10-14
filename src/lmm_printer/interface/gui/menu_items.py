@@ -41,9 +41,9 @@ class Item:
     captured: bool = False
 
     def on_Press(self , handler):
-        return
+        return Result.success()
     def on_Turn(self , turns):
-        return
+        return Result.success()
     def draw_Panel(self , canvas , theme):
         width , height = canvas.get_size()
         pygame.draw.rect(canvas , theme.body_color , pygame.Rect(0 , 0 , width , height))
@@ -68,8 +68,9 @@ class Leaf(Item):
     def on_Press(self , handler):
         try:
             result=self.action()
-            for _ in range(self.pop):
-                handler.pop()
+            if not (isinstance(result , Result) and result.bad):
+                for _ in range(self.pop):
+                    handler.pop()
             return result if isinstance(result , Result) else Result.success()
         except Exception as e:
             return Result.error(message=f"Error doing action of {self.label}. Error was {e}.")
@@ -97,9 +98,11 @@ class Num_Select(Item):
 
     def on_Press(self , handler):
         self.captured = not self.captured
+        return Result.success()
     def on_Turn(self, turns):
         if self.captured:
             self.value += turns*self.step
+            return Result.success()
     def draw(self , canvas , selected , themes):
         theme = themes[selected + self.captured]
         self.draw_Panel(canvas , theme)
@@ -115,9 +118,11 @@ class Checkbox(Item):
 
     def on_Press(self , handler):
         self.captured = not self.captured
+        return Result.success()
     def on_Turn(self, turns):
         if self.captured:
             self.is_checked = not self.is_checked
+        return Result.success()
     def draw_Checkbox(self , canvas , theme):
         width , height = canvas.get_size()
         box_size = theme.checkbox_size
@@ -146,3 +151,4 @@ class Back(Item):
     label: str = "Back"
     def on_Press(self, handler):
         handler.pop()
+        return Result.success()

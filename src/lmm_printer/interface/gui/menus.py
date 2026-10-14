@@ -45,16 +45,15 @@ class Menu_Handler():
         
         _ , _ , item = self.get_Current()
 
+        result = None
         if pressed:
             result = item.on_Press(self)
-            if result is not None and result.bad:
-                self.notify(result)
         elif turns:
             result = item.on_Turn(turns)
-            if result is not None and result.bad:
-                self.notify(result)
             if not item.captured:
                 self._navigate(turns)
+        if result is not None and isinstance(result , Result) and result.message:
+            self.notify(result)
 
     def _navigate(self , turns):
         _ , cursor , _ = self.get_Current()
