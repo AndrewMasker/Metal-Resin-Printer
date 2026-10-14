@@ -64,10 +64,13 @@ class Item:
 @dataclass(eq=False)
 class Leaf(Item):
     action: Callable = None
-
+    pop: int = 0
     def on_Press(self , handler):
         try:
-            return Result.success(value=self.action())
+            result=self.action()
+            for _ in range(self.pop):
+                handler.pop()
+            return result if isinstance(result , Result) else Result.success()
         except Exception as e:
             return Result.error(message=f"Error doing action of {self.label}. Error was {e}.")
         
@@ -140,5 +143,6 @@ class Checkbox(Item):
 
 @dataclass(eq=False)
 class Back(Item):
+    label: str = "Back"
     def on_Press(self, handler):
         handler.pop()
