@@ -5,6 +5,7 @@ from lmm_printer.core.types import Result
 
 @dataclass
 class Theme:
+    height: int = 24
     outline_t: int = 3
     font: pygame.font.Font = None
     gaps: int = 5

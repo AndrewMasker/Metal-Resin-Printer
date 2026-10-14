@@ -29,3 +29,4 @@ files:
 display:
   width: 240
   height: 240
+  menu_area_height: 200

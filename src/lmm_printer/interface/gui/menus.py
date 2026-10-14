@@ -88,8 +88,23 @@ class Menu_Handler():
         self.menu_stack[-1] = Menu_Frame(menu=menu , cursor=cursor)
         return Result.success()
 
-    def draw(self):
+    def draw(self , canvas , themes):
+        menu_canvas_width , menu_canvas_height = canvas.get_size()
         menu , cursor , item = self.get_Current()
+        menu_height = sum([item.height for item in menu])
+        cursor_depth = sum([item.height for item in menu[:cursor]])
+        menu_midpoint = menu_canvas_height//2
+        if cursor_depth < menu_midpoint:
+            offset = 0
+        elif menu_midpoint <= cursor_depth <= (menu_height - menu_midpoint):
+            offset = menu_midpoint - cursor_depth
+        else:
+            offset = -(menu_height - menu_midpoint)
+
+        for index , item in enumerate(menu):
+            item.draw(canvas , index == cursor , themes)
+        
+        
 
 def main_Menu(print_session):
 
