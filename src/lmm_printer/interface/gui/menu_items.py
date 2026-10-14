@@ -32,7 +32,7 @@ class Captured_Theme(Theme):
     outline_color: str = "#231b1b"
     text_color: str = "#231b1b"
     checkbox_color: str = "#231b1b"
-    checkbox_button_color: str = "#ff8811"
+    checkbox_button_color: str = "#231b1b"
 
 @dataclass(eq=False)
 class Item:
