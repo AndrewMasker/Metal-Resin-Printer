@@ -15,6 +15,7 @@ class Menu_Handler():
     def push(self , menu):
         if not menu:
             self.notify(Result.error("Sub menu is empty."))
+            return
         menu_frame = Menu_Frame(menu=menu)
         self.menu_stack.append(menu_frame)
         result = self._make_Cursor_Valid()
