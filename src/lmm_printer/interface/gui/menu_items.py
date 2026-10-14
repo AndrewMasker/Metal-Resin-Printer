@@ -6,33 +6,33 @@ from lmm_printer.core.types import Result
 @dataclass
 class Theme:
     height: int = 24
-    outline_t: int = 3
+    outline_t: int = 1
     font: pygame.font.Font = None
     gaps: int = 5
     checkbox_size: int = 12
-    checkbox_t: int = 2
+    checkbox_t: int = 1
     checkbox_button_size: int = 6
-    body_color: tuple = (0 , 0 , 0)
-    outline_color: tuple = (210 , 210 , 210)
-    text_color: tuple = (128 , 128 , 128)
-    checkbox_color: tuple = (210 , 210 , 210)
-    checkbox_button_color: tuple = (128 , 128 , 128)
+    body_color: int = 0x9cafb7
+    outline_color: int = 0xd64550
+    text_color: int = 0x231b1b
+    checkbox_color: int = 0x231b1b
+    checkbox_button_color: int = 0xff8811
 
 @dataclass
 class Selected_Theme(Theme):
-    body_color: tuple = (10 , 10 , 10)
-    outline_color: tuple = (255 , 255 , 255)
-    text_color: tuple = (128 , 128 , 128)
-    checkbox_color: tuple = (255 , 255 , 255)
-    checkbox_button_color: tuple = (128 , 128 , 128)
+    body_color: int = 0xd64550
+    outline_color: int = 0x9cafb7
+    text_color: int = 0x231b1b
+    checkbox_color: int = 0x231b1b
+    checkbox_button_color: int = 0xff8811
 
 @dataclass
 class Captured_Theme(Theme):
-    body_color: tuple = (255 , 255 , 255)
-    outline_color: tuple = (0 , 0 , 0)
-    text_color: tuple = (0 , 0 , 0)
-    checkbox_color: tuple = (0 , 0 , 0)
-    checkbox_button_color: tuple = (0 , 0 , 0)
+    body_color: int = 0x9cafb7
+    outline_color: int = 0x231b1b
+    text_color: int = 0x231b1b
+    checkbox_color: int = 0x231b1b
+    checkbox_button_color: int = 0xff8811
 
 @dataclass(eq=False)
 class Item:
