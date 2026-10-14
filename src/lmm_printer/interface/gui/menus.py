@@ -8,10 +8,16 @@ class Menu_Frame:
     cursor: int = 0
 
 class Menu_Handler():
-    def __init__(self , init_menu , notify , config):
+    def __init__(self , init_menu , notify):
         self.menu_stack = [Menu_Frame(menu=init_menu)]
         self.notify = notify
-        self.config = config
+
+    def push(self , menu):
+        menu_frame = Menu_Frame(menu=menu)
+        self.menu_stack.append(menu_frame)
+
+    def pop(self):
+        self.menu_stack.pop(index=-1)
 
     def get_Current(self):
         menu = self.menu_stack[-1].menu
@@ -31,60 +37,13 @@ class Menu_Handler():
 
         if pressed:
             result = item.on_Press(self)
+            if result is not None and result.bad:
+                self.notify(result)
         elif turns:
-            result = item.On_Turns(turns)
+            result = item.on_Turns(turns)
+            if result is not None and result.bad:
+                self.notify(result)
         if not item.captured:
-            self._navigate()
-
-    def _num_Select(self , turns , pressed):
-        _ , _ , item = self.get_Current()
-        if item.editing:
-            if pressed:
-                item.editing = False
-                return
-            item.value += turns * item.step
-        else:
-            if pressed: item.editing = True; return
-            self._navigate(turns)
-
-    def _leaf(self , turns , pressed):
-        if pressed:
-            _ , _ , item = self.get_Current()
-            try: 
-                item.action()
-                return Result.success()
-            except Exception as e:
-                return Result.error(message=f"Error doing {item.label}. Error was: {e}.")
-        else:
-            self._navigate(turns)
-            return Result.success()
-
-    def _branch(self , turns , pressed):
-        if pressed:
-            _ , _ , item = self.get_Current()
-            try:
-                menu = item.submenu()
-            except Exception as e:
-                return Result.error(f"Error opening submenu. Error was: {e}.")
-            menu_frame = Menu_Frame(menu=menu)
-            self.menu_stack.append(menu_frame)
-            return Result.success()
-        else:
-            self._navigate(turns)
-
-    def _checkbox(self , turns , pressed):
-        _ , _ , item = self.get_Current()
-        if item.editing:
-            if pressed:
-                item.editing = False
-                return
-            if turns:
-                item.is_checked = not item.is_checked
-                return
-        else:
-            if pressed:
-                item.editing = True
-                return
             self._navigate(turns)
 
     def _navigate(self , turns):

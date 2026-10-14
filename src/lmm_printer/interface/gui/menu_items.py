@@ -1,7 +1,5 @@
 from dataclasses import dataclass
 from collections.abc import Callable
-from enum import Enum
-from typing import Generic , TypeVar
 import pygame
 from lmm_printer.core.types import Result
 
@@ -12,9 +10,9 @@ class Theme:
     outline_t: int = 3
     font: pygame.font.Font = None
     gaps: int = 5
-    checkbox_size: int = 10
-    checkbox_t: int = 3
-    checkbox_button_size: int = 8
+    checkbox_size: int = 12
+    checkbox_t: int = 2
+    checkbox_button_size: int = 6
     body_color: tuple = (0 , 0 , 0)
     outline_color: tuple = (210 , 210 , 210)
     text_color: tuple = (128 , 128 , 128)
@@ -38,7 +36,7 @@ class Captured_Theme(Theme):
     checkbox_button_color: tuple = (0 , 0 , 0)
 
 @dataclass(eq=False)
-class Item(Generic[T]):
+class Item:
     label: str = "Unknown Label"
     cursor: bool = True
     captured: bool = False
@@ -49,8 +47,8 @@ class Item(Generic[T]):
         return
     def draw_Panel(self , canvas , theme):
         width , height = canvas.get_size()
-        pygame.draw.rect(canvas , theme.body_color , pygame.rect(0 , 0 , width , height))
-        pygame.draw.rect(canvas , theme.outline_color , pygame.rect(theme.outline_t , theme.outline_t , width-theme.outline_t , height-theme.outline_t) , width=theme.outline_t)
+        pygame.draw.rect(canvas , theme.body_color , pygame.Rect(0 , 0 , width , height))
+        pygame.draw.rect(canvas , theme.outline_color , canvas.get_rect() , width=theme.outline_t)
     def center(self , canvas , surface):
         width , height = canvas.get_size()
         surf_width , surf_height = surface.get_size()
@@ -77,13 +75,15 @@ class Leaf(Item):
 
 @dataclass(eq=False)
 class Branch(Item):
-    submenu: Callable = None
+    sub_menu: Callable = None
 
     def on_Press(self , handler):
         try:
-            return Result.success(value=self.submenu())
+            sub_menu = self.submenu()
+            handler.push(sub_menu)
+            return Result.success()
         except Exception as e:
-            return Result.error(message=f"Error doing action. Error was {e}.")
+            return Result.error(message=f"Error doing the action of {self.label}. Error was {e}.")
 
 @dataclass(eq=False)
 class Title(Item):
@@ -105,7 +105,7 @@ class Num_Select(Item):
         text = theme.font.render(self.label , True , theme.text_color)
         text_x , text_y = self.center(canvas , text)
         canvas.blit(text , (theme.gap + theme.outline_t , text_y))
-        value_text = theme.font.render(str(self.value) , True , theme.text_color)
+        value_text = theme.font.render(f"{self.value:.2f}" , True , theme.text_color)
         canvas.blit(value_text , (2*theme.gap + theme.outline_t + text.get_width() , text_y))
     
 @dataclass(eq=False)
@@ -126,16 +126,16 @@ class Checkbox(Item):
         t = theme.outline_t
         box_x = width - t - gap - 2*box_t - box_size
         box_y = (height // 2) - (box_size // 2)  
-        pygame.draw.rect(canvas , theme.checkbox_color , pygame.rect(box_x , box_y , box_size , box_size) , width = box_t)
+        pygame.draw.rect(canvas , theme.checkbox_color , pygame.Rect(box_x , box_y , box_size , box_size) , width = box_t)
         if self.is_checked:
             button_x = box_x + (box_size - button_size)//2
             button_y = box_y + (box_size - button_size)//2
-            pygame.draw.rect(canvas , theme.checkbox_button_color , pygame.rect(button_x , button_y , button_size , button_size))
+            pygame.draw.rect(canvas , theme.checkbox_button_color , pygame.Rect(button_x , button_y , button_size , button_size))
     def draw(self , canvas , selected , themes):
         theme = themes[selected + self.captured]
         self.draw_Panel(canvas , theme)
         text = theme.font.render(self.label , True , theme.text_color)
         text_x , text_y = self.center(canvas , text)
         canvas.blit(text , (theme.gap + theme.outline_t , text_y))
-        self.draw_Checkbox()
+        self.draw_Checkbox(canvas , theme)
         
