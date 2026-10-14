@@ -8,9 +8,10 @@ class Menu_Frame:
     cursor: int = 0
 
 class Menu_Handler():
-    def __init__(self , init_menu , notify):
+    def __init__(self , init_menu , notify , config):
         self.menu_stack = [Menu_Frame(menu=init_menu)]
         self.notify = notify
+        self.config = config
 
     def get_Current(self):
         menu = self.menu_stack[-1].menu
@@ -28,22 +29,12 @@ class Menu_Handler():
         
         _ , _ , item = self.get_Current()
 
-        item_type = item.i_type
-
-        if item_type == m.Item_Type.NUM_SELECT:
-            self._num_Select(turns , pressed)
-        elif item_type == m.Item_Type.LEAF:
-            result = self._leaf(turns , pressed)
-            if result.bad:
-                self.notify(result)
-        elif item_type == m.Item_Type.BRANCH:
-            result = self._branch(turns , pressed)
-            if result.bad:
-                self.notify(result)
-        elif item_type == m.Item_Type.CHECKBOX:
-            self._checkbox(turns , pressed)
-        else:
-            self._navigate(turns)
+        if pressed:
+            result = item.on_Press(self)
+        elif turns:
+            result = item.On_Turns(turns)
+        if not item.captured:
+            self._navigate()
 
     def _num_Select(self , turns , pressed):
         _ , _ , item = self.get_Current()
@@ -128,6 +119,9 @@ class Menu_Handler():
 
         self.menu_stack[-1] = Menu_Frame(menu=menu , cursor=cursor)
         return Result.success()
+
+    def draw(self):
+        menu , cursor , item = self.get_Current()
 
 def main_Menu(print_session):
 
