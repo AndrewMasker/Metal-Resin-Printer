@@ -40,6 +40,7 @@ class Menu_Handler():
         result = self._make_Cursor_Valid()
         if result.bad:
             self.notify(result)
+            return
         
         _ , _ , item = self.get_Current()
 
