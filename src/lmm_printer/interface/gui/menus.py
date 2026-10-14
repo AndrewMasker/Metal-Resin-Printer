@@ -95,25 +95,30 @@ class Menu_Handler():
         menu_height = 0
         cursor_depth = 0
         for index , item in enumerate(menu):
-            menu_height += themes[item.editing + (index == cursor)].height
-            cursor_depth += themes[item.editing + (index == cursor)].height if index<cursor else 0
+            menu_height += themes[item.captured + (index == cursor)].height
+            cursor_depth += themes[item.captured + (index == cursor)].height if index<cursor else 0
         canvas_midpoint = canvas_height//2
-        if cursor_depth < canvas_midpoint:
-            offset = 0
-        elif canvas_midpoint <= cursor_depth <= (menu_height - canvas_midpoint):
-            offset = canvas_midpoint - cursor_depth
+        if menu_height>canvas_height:
+            if cursor_depth < canvas_midpoint:
+                offset = 0
+            elif canvas_midpoint <= cursor_depth <= (menu_height - canvas_midpoint):
+                offset = canvas_midpoint - cursor_depth
+            else:
+                offset = canvas_height - menu_height
         else:
-            offset = canvas_height - menu_height
+            offset = 0
 
         item_depth = 0
         for index , item in enumerate(menu):
-            theme = themes[item.editing + selected]
-            item_height = theme.height
             selected = index == cursor
-            item_depth += item_height
+            theme = themes[item.captured + selected]
+            item_height = theme.height
             item_offset = item_depth + offset
             rect = pygame.Rect(0 , item_offset , canvas_width , item_height)
+            item_depth += item_height
+            if not canvas.get_rect.contains(rect): continue
             item.draw(canvas.subsurface(rect) , selected , themes)
+            
         
         
 

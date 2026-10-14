@@ -12,27 +12,27 @@ class Theme:
     checkbox_size: int = 12
     checkbox_t: int = 1
     checkbox_button_size: int = 6
-    body_color: int = 0x9cafb7
-    outline_color: int = 0xd64550
-    text_color: int = 0x231b1b
-    checkbox_color: int = 0x231b1b
-    checkbox_button_color: int = 0xff8811
+    body_color: str = "#9cafb7"
+    outline_color: str = "#231b1b"
+    text_color: str = "#231b1b"
+    checkbox_color: str = "#231b1b"
+    checkbox_button_color: str = "#ff8811"
 
 @dataclass
 class Selected_Theme(Theme):
-    body_color: int = 0xd64550
-    outline_color: int = 0x9cafb7
-    text_color: int = 0x231b1b
-    checkbox_color: int = 0x231b1b
-    checkbox_button_color: int = 0xff8811
+    body_color: str = "#d64550"
+    outline_color: str = "#231b1b"
+    text_color: str = "#231b1b"
+    checkbox_color: str = "#231b1b"
+    checkbox_button_color: str = "#ff8811"
 
 @dataclass
 class Captured_Theme(Theme):
-    body_color: int = 0x9cafb7
-    outline_color: int = 0x231b1b
-    text_color: int = 0x231b1b
-    checkbox_color: int = 0x231b1b
-    checkbox_button_color: int = 0xff8811
+    body_color: str = "#ff8811"
+    outline_color: str = "#231b1b"
+    text_color: str = "#231b1b"
+    checkbox_color: str = "#231b1b"
+    checkbox_button_color: str = "#ff8811"
 
 @dataclass(eq=False)
 class Item:
