@@ -137,7 +137,7 @@ class Checkbox(Item):
         self.draw_Checkbox(canvas , theme)
 
 
-@dataclass
+@dataclass(eq=False)
 class Back(Item):
     def on_Press(self, handler):
         handler.pop()

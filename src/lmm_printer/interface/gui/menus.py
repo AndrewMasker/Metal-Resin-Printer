@@ -13,6 +13,8 @@ class Menu_Handler():
         self.notify = notify
 
     def push(self , menu):
+        if not menu:
+            self.notify(Result.error("Sub menu is empty."))
         menu_frame = Menu_Frame(menu=menu)
         self.menu_stack.append(menu_frame)
         result = self._make_Cursor_Valid()
@@ -36,7 +38,7 @@ class Menu_Handler():
     def do_Input(self , turns , pressed):
         result = self._make_Cursor_Valid()
         if result.bad:
-            return result
+            self.notify(result)
         
         _ , _ , item = self.get_Current()
 
@@ -45,7 +47,7 @@ class Menu_Handler():
             if result is not None and result.bad:
                 self.notify(result)
         elif turns:
-            result = item.on_Turns(turns)
+            result = item.on_Turn(turns)
             if result is not None and result.bad:
                 self.notify(result)
             if not item.captured:
