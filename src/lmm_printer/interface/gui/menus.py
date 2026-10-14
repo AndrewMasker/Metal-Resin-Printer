@@ -37,7 +37,9 @@ class Menu_Handler():
             if result.bad:
                 self.notify(result)
         elif item_type == m.Item_Type.BRANCH:
-            self._branch(turns , pressed)
+            result = self._branch(turns , pressed)
+            if result.bad:
+                self.notify(result)
         elif item_type == m.Item_Type.CHECKBOX:
             self._checkbox(turns , pressed)
         else:
@@ -69,9 +71,13 @@ class Menu_Handler():
     def _branch(self , turns , pressed):
         if pressed:
             _ , _ , item = self.get_Current()
-            menu = item.submenu()
+            try:
+                menu = item.submenu()
+            except Exception as e:
+                return Result.error(f"Error opening submenu. Error was: {e}.")
             menu_frame = Menu_Frame(menu=menu)
             self.menu_stack.append(menu_frame)
+            return Result.success()
         else:
             self._navigate(turns)
 
