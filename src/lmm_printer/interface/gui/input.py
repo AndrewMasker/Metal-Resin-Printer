@@ -33,7 +33,7 @@ class Encoder_Input:
                         turns += e.value
                     elif e.type == ecodes.EV_KEY and e.code == ecodes.KEY_ENTER and e.value == 1:
                         pressed = True
-            except BlockingIOError:
+            except Exception as e:
                 pass
         return turns , pressed
 

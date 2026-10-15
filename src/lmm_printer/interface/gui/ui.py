@@ -27,8 +27,9 @@ class UI(Generic_UI):
         panel_path = find_Panel()
         self.framebuffer = Framebuffer(panel_path , (width , height))
 
-        self._set_Menu_Handlers(print_session)
         self.text_output = Text_Output(self.config["display"]["notify"]["max_lines"] , Theme(font=font))
+        self._set_Menu_Handlers(print_session)
+        
 
     def _set_canvases(self):
         width = self.config["display"]["width"]
