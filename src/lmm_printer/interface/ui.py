@@ -16,20 +16,6 @@ class Generic_UI(ABC):
         ...
 
     @abstractmethod
-    def ask_Yes_No(self , message):
-        """
-        Asks the user a yes or no question.
-        """
-        ...
-
-    @abstractmethod
-    def wait_To_Continue(self , message):
-        """
-        Prints a message and waits for the user to continue.
-        """
-        ...
-
-    @abstractmethod
     def get_Do_Command(self , print_session):
         """
         This is a blocking idle menu that waits until a command is recieved and does it.

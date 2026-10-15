@@ -60,47 +60,6 @@ class UI(Generic_UI):
         error_message = "Message: " + str(message) + " has unknown output type. "
         print(error_message)
 
-    def ask_Yes_No(self , message):
-        """
-        Asks a yes no question to the user.
-
-        Parameters:
-            message (str): The question to be asked.
-
-        Returns:
-            bool: True if the answer was yes, False if the answer was no. 
-        """
-
-        print("")
-        print(message)
-        print("'y' for yes, 'n' for no. ")
-        while True:
-            response = input("").strip().lower()
-            if response == "y":
-                return True
-            elif response == "n":
-                return False
-            else:
-                print("Enter 'y' or 'n'. ")
-
-    def wait_To_Continue(self, message):
-        """
-        Prints a message and waits until the user pressed Enter to continue.
-
-        Parameters:
-            message (str): The message to be printed.
-        """
-
-        print("")
-        print(message)
-        print("Press Enter to continue. ")
-        while True:
-            response = input("").strip().lower()
-            if response == "":
-                return
-            else:
-                print("Invalid entry. ")
-
     def get_Do_Command(self , print_session):
         """
         Queries the user for a command and then does it.
