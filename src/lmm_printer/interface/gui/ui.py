@@ -20,13 +20,15 @@ class UI(Generic_UI):
         font = pygame.font.SysFont("Arial", 24)
         self.themes = (Theme(font=font) , Selected_Theme(font=font) , Captured_Theme(font=font))
 
-        self._set_Menu_Handlers(print_session)
-        self.text_output = Text_Output(self.config["display"]["notify"]["max_lines"] , Theme(font=font))
-
         self.input = Encoder_Input()
 
+        width = self.config["display"]["width"]
+        height = self.config["display"]["height"]
         panel_path = find_Panel()
-        self.framebuffer = Framebuffer(panel_path , (self.width , self.height))
+        self.framebuffer = Framebuffer(panel_path , (width , height))
+
+        self._set_Menu_Handlers(print_session)
+        self.text_output = Text_Output(self.config["display"]["notify"]["max_lines"] , Theme(font=font))
 
     def _set_canvases(self):
         width = self.config["display"]["width"]

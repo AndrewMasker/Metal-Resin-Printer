@@ -30,7 +30,7 @@ class Print_Session:
 
         if args.gui:
             from lmm_printer.interface.gui.ui import UI
-            self.ui = UI()
+            self.ui = UI(self , self.config)
         else:
             from lmm_printer.interface.cli.ui import UI
             self.ui = UI()

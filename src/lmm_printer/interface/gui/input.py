@@ -1,6 +1,5 @@
 import evdev
 from evdev import ecodes
-import glob , os
 import select
 
 class Encoder_Input:
@@ -34,7 +33,7 @@ class Encoder_Input:
                         turns += e.value
                     elif e.type == ecodes.EV_KEY and e.code == ecodes.KEY_ENTER and e.value == 1:
                         pressed = True
-            except Exception as e:
+            except BlockingIOError:
                 pass
         return turns , pressed
 
@@ -42,10 +41,3 @@ class Encoder_Input:
         for dev in self.devices:
             dev.ungrab()
             dev.close()
-
-def find_Panel(match = "mipi"):
-    for name_file in sorted(glob.glob("/sys/class/graphics/fb*/name")):
-        with open(name_file) as f:
-            if match in f.read():
-                return "/dev/" + os.path.basename(os.path.dirname(name_file))
-    raise FileNotFoundError
