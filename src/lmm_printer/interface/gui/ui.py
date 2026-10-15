@@ -8,13 +8,11 @@ import pygame
 class UI(Generic_UI):
     def __init__(self , print_session , config):
         self.config = config
-        self.width = self.config["display"]["width"]
-        self.width = self.config["display"]["height"]
 
         pygame.display.init()
         pygame.font.init()
 
-        self.canvas = pygame.display.set_mode((self.width , self.height))
+        self._set_canvases()
 
         font = pygame.font.SysFont("Arial", 24)
         self.themes = (Theme(font=font) , Selected_Theme(font=font) , Captured_Theme(font=font))
@@ -27,6 +25,31 @@ class UI(Generic_UI):
         panel_path = find_Panel()
         self.framebuffer = Framebuffer(panel_path , (self.width , self.height))
 
+    def _set_canvases(self):
+        width = self.config["display"]["width"]
+        height = self.config["display"]["height"]
+        self.canvas = pygame.display.set_mode((width , height))
+
+        menu_width = self.config["display"]["menu"]["width"]
+        menu_height = self.config["display"]["menu"]["height"]
+        menu_x = self.config["display"]["menu"]["x"]
+        menu_y = self.config["display"]["menu"]["y"]
+        menu_rect = pygame.Rect(menu_x , menu_y , menu_width , menu_height)
+        self.menu_canvas = self.canvas.subsurface(menu_rect)
+
+        notify_width = self.config["display"]["notify"]["width"]
+        notify_height = self.config["display"]["notify"]["height"]
+        notify_x = self.config["display"]["notify"]["x"]
+        notify_y = self.config["display"]["notify"]["y"]
+        notify_rect = pygame.Rect(notify_x , notify_y , notify_width , notify_height)
+        self.notify_canvas = self.canvas.subsurface(notify_rect)
+
+        status_width = self.config["display"]["status"]["width"]
+        status_height = self.config["display"]["status"]["height"]
+        status_x = self.config["display"]["status"]["x"]
+        status_y = self.config["display"]["status"]["y"]
+        status_rect = pygame.Rect(status_x , status_y , status_width , status_height)
+        self.status_canvas = self.canvas.subsurface(status_rect)
 
     def start(self):
         """
