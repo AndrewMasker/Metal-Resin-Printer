@@ -154,11 +154,11 @@ class UI(Generic_UI):
         
         
     def stop_Poll_During_Print(self):
-        while not self.commands.empty():
-            _ = self.commands.get_nowait()
         self.stop_event.set()
         self.thread.join()
         self.stop_event.clear()
+        while not self.commands.empty():
+            _ = self.commands.get_nowait()
         while self.print_handler.pop():
             pass
         self.menu_dirty = True
