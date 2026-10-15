@@ -88,10 +88,10 @@ class UI(Generic_UI):
 
     def _draw_Notify(self):
         if self.notify_dirty:
+            self.notify_dirty = False
             self.notify_canvas.fill(self.text_output.theme.body_color)
             self.text_output.draw(self.notify_canvas)
             self.framebuffer.show(self.canvas)
-            self.notify_dirty = False
 
     def get_Do_Command(self , print_session):
         """
@@ -110,7 +110,7 @@ class UI(Generic_UI):
             menu_canvas.fill(self.themes[0].body_color)
             handler.draw(menu_canvas , self.themes)
             self.framebuffer.show(self.canvas)
-            self.dirty = False
+            self.meu_dirty = False
 
     def poll_During_Print(self , print_session):
         """
@@ -124,9 +124,9 @@ class UI(Generic_UI):
             turns , pressed = self.input.read()
             if turns or pressed:
                 self.print_handler.do_Input(turns , pressed)
-                self.dirty = True
+                self.print_dirty = True
 
-            self._draw_Menu_Area(self.main_handler , self.menu_canvas)
+            self._draw_Menu_Area(self.print_handler , self.menu_canvas)
             self._draw_Notify()
 
     def _run_Command(self , wait = None):
@@ -149,14 +149,17 @@ class UI(Generic_UI):
         """
         self.thread = threading.Thread(target = self._ui_Loop , daemon=True)
         self.thread.start()
+        self.print_dirty = True
         
     def stop_Poll_During_Print(self):
-        while self.print_handler.pop():
-            pass
-        self.dirty = True
-        self.stop_event.Set()
+        self.stop_event.set()
         self.thread.join()
         self.stop_event.clear()
+        while self.print_handler.pop():
+            pass
+        self.menu_dirty = True
+
+
 
 
     
