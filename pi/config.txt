@@ -30,8 +30,8 @@ core_freq_min=250
 # BOOT PIN STATES
 # Proj_ON held off.
 gpio=5=op,dl
-# Proj_PRINT held off.
-gpio=13=op,dl
+# Proj_PRINT set to have a pulldown.
+gpio=13=ip,pd
 # Disables internal pulldowns for encoder.
 gpio=25,26=ip,pn
 # Disables Hat eeprom probe for pin that goes to spare gpio.

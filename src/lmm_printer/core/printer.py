@@ -207,8 +207,8 @@ class Printer:
         return state
 
     def safe_Shutdown(self):
-        self.save_State(safe_shutdown = True)
         self.stop_Active()
+        self.save_State(safe_shutdown = True)
         self.teensy.shutdown()
         GPIO.cleanup()
 
