@@ -3,11 +3,14 @@ from lmm_printer.interface.gui.menu_items import Theme , Selected_Theme , Captur
 from lmm_printer.interface.gui.menus import Menu_Handler , main_Menu
 from lmm_printer.interface.gui.input import Encoder_Input
 from lmm_printer.interface.gui.display import Framebuffer , find_Panel
+from lmm_printer.interface.gui.text_output import Text_Output
+from lmm_printer.core.types import Result
 import pygame
 
 class UI(Generic_UI):
     def __init__(self , print_session , config):
         self.config = config
+        self.dirty = True
 
         pygame.display.init()
         pygame.font.init()
@@ -17,8 +20,8 @@ class UI(Generic_UI):
         font = pygame.font.SysFont("Arial", 24)
         self.themes = (Theme(font=font) , Selected_Theme(font=font) , Captured_Theme(font=font))
 
-        main_menu = main_Menu(print_session , self.notify)
-        self.main_handler = Menu_Handler(main_menu , self.notify)
+        self._set_Menu_Handlers(print_session)
+        self.text_output = Text_Output(self.config["display"]["notify"]["max_lines"] , Theme(font=font))
 
         self.input = Encoder_Input()
 
@@ -51,6 +54,10 @@ class UI(Generic_UI):
         status_rect = pygame.Rect(status_x , status_y , status_width , status_height)
         self.status_canvas = self.canvas.subsurface(status_rect)
 
+    def _set_Menu_Handlers(self , print_session):
+        main_menu = main_Menu(print_session , self.notify)
+        self.main_handler = Menu_Handler(main_menu , self.notify)
+
     def start(self):
         """
         This is a function that starts the ui.
@@ -61,14 +68,30 @@ class UI(Generic_UI):
         """
         Notifies the user with some message.
         """
-        return
+        if isinstance(message , Result):
+            self.text_output.push(message.message)
+        elif isinstance(message , str):
+            self.text_output.push(message)
+        else:
+            self.text_output.push(f"{message}")
+        self.notify_canvas.fill(self.text_output.theme.body_color)
+        self.text_output.draw(self.notify_canvas)
+        self.framebuffer.show(self.canvas)
 
     def get_Do_Command(self , print_session):
         """
         This is a blocking idle menu that waits until a command is recieved and does it.
         """
         turns , pressed = self.input.read()
-        self.main_handler.do_Input(turns , pressed)
+        if turns or pressed:
+            self.main_handler.do_Input(turns , pressed)
+            self.dirty = True
+
+        if self.dirty:
+            self.menu_canvas.fill(self.themes[0].body_color)
+            self.main_handler.draw(self.menu_canvas , self.themes)
+            self.framebuffer.show(self.canvas)
+            self.dirty = False
         return
 
     def poll_During_Print(self , print_session):

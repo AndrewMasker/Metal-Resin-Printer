@@ -39,6 +39,7 @@ display:
     height: 40
     x: 0
     y: 200
+    max_lines: 10
   status:
     width: 120
     height: 40

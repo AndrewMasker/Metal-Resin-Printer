@@ -1,6 +1,7 @@
 import evdev
 from evdev import ecodes
 import glob , os
+import select
 
 class Encoder_Input:
     def __init__(self):
@@ -14,7 +15,7 @@ class Encoder_Input:
             else:
                 dev.close()
 
-    def read(self):
+    def read(self , timeout = .5):
         """Reads the inputs.
 
         Returns:
@@ -23,14 +24,17 @@ class Encoder_Input:
         """
 
         turns , pressed = 0 , False
-        for dev in self.devices:
+
+        readable , _ , _ = select.select(self.devices , [] , [] , timeout)
+
+        for dev in readable:
             try:
                 for e in dev.read():
                     if e.type == ecodes.EV_REL and e.code == ecodes.REL_X:
                         turns += e.value
                     elif e.type == ecodes.EV_KEY and e.code == ecodes.KEY_ENTER and e.value == 1:
                         pressed = True
-            except BlockingIOError:
+            except Exception as e:
                 pass
         return turns , pressed
 
