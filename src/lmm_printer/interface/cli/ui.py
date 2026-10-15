@@ -268,17 +268,21 @@ class UI(Generic_UI):
             print("")
             print("h: Prints this message.")
             print("p: Pauses the printer.")
+            print("r: Resumes the printer.")
             print("q: Safely quits the process.")
             print("t: Show the temperatures of probes. ")
             print("Note - neither pausing nor quitting will stop axes from completing their current move.")
             print("")
 
         elif inp == "p":
+            print("Requesting to pause...")
+            print_session.request_Pause()
             print("Enter r to resume.")
-            while True:
-                response = input("").strip().lower()
-                if response == "r":
-                    break
+
+        elif inp == "r":
+            print("Requesting to unpause...")
+            print_session.request_Unpause()
+            print("Continuing.")
                     
         elif inp == "q":
             print_session.request_Stop()

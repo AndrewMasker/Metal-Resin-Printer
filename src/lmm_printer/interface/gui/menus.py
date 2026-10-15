@@ -183,3 +183,32 @@ def _choose_File_Menu(print_session , notify):
         menu.append(m.Leaf(label=file.name , action=lambda file = file: print_session.load_Print_File(file) , pop=1))
     menu.append(m.Back())
     return menu
+
+
+def print_Menu(print_session , notify , command_queue):
+    title = m.Title("Print In Progress")
+    stop = m.Branch(label="Stop Print" , sub_menu=lambda: _stop_Menu(print_session , notify , command_queue))
+    pause = m.Branch(label="Pause Print" , sub_menu=_pause_Menu(print_session , notify , command_queue))
+    return [title , pause , stop]
+
+def _stop_Menu(print_session , notify , command_queue):
+    title = m.Title("Stop Print?")
+    yes = m.Leaf(label="Yes")
+    no = m.Back(label="No")
+    def on_Yes():
+        notify("Requesting to stop print...")
+        command_queue.put(print_session.request_Stop)
+    yes.action = on_Yes
+    return [title , yes , no]
+
+def _pause_Menu(print_session , notify , command_queue):
+    notify("Requesting to pause print...")
+    command_queue.put(print_session.request_Pause)
+    title = m.Title("Paused")
+    unpause = m.Leaf("Unpause" , pop=1)
+    stop = m.Branch(label="Stop Print" , sub_menu=lambda: _stop_Menu(print_session , notify , command_queue))
+    def on_Unpause():
+        notify("Requesting to unpause print...")
+        command_queue.put(print_session.request_Unpause)
+    unpause.action = on_Unpause
+    return [title , unpause , stop]

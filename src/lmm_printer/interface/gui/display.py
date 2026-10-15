@@ -18,3 +18,7 @@ def find_Panel(match = "mipi"):
             if match in f.read():
                 return "/dev/" + os.path.basename(os.path.dirname(name_file))
     raise FileNotFoundError
+
+
+
+

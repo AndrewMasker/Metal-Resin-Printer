@@ -200,6 +200,7 @@ class Print_Session:
 
         self.stop_print = False
         self.printing = True
+        self.paused = False
         
         self.ui.start_Poll_During_Print()
 
@@ -212,6 +213,9 @@ class Print_Session:
                     if self.printer.check_Heaters():
                         break
                 if self.stop_print: return Result.success("Print stopped.")
+
+                while self.paused:
+                    self.ui.poll_During_Print()
 
                 with Print_File(self.file) as print_file:
                     if i == self.num_layers: next_image = None
@@ -262,6 +266,12 @@ class Print_Session:
 
     def request_Stop(self):
         self.stop_print = True
+
+    def request_Pause(self):
+        self.paused = True
+
+    def request_Unpause(self):
+        self.paused = False
 
     def _make_safe(self):
         try:
