@@ -27,6 +27,9 @@ class Menu_Handler():
     def pop(self , index = -1):
         if len(self.menu_stack)>1:
             self.menu_stack.pop(index)
+            return True
+        else:
+            return False
 
     def get_Current(self):
         menu = self.menu_stack[-1].menu
@@ -188,7 +191,7 @@ def _choose_File_Menu(print_session , notify):
 def print_Menu(print_session , notify , command_queue):
     title = m.Title("Print In Progress")
     stop = m.Branch(label="Stop Print" , sub_menu=lambda: _stop_Menu(print_session , notify , command_queue))
-    pause = m.Branch(label="Pause Print" , sub_menu=_pause_Menu(print_session , notify , command_queue))
+    pause = m.Branch(label="Pause Print" , sub_menu=lambda: _pause_Menu(print_session , notify , command_queue))
     return [title , pause , stop]
 
 def _stop_Menu(print_session , notify , command_queue):

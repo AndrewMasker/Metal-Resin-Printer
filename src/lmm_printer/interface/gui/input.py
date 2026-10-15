@@ -33,8 +33,10 @@ class Encoder_Input:
                         turns += e.value
                     elif e.type == ecodes.EV_KEY and e.code == ecodes.KEY_ENTER and e.value == 1:
                         pressed = True
-            except Exception as e:
+            except BlockingIOError:
                 pass
+            except OSError:
+                self.devices.remove(dev)
         return turns , pressed
 
     def close(self):

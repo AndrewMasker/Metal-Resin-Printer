@@ -11,7 +11,7 @@ import pygame
 class UI(Generic_UI):
     def __init__(self , print_session , config):
         self.config = config
-        self.dirty = True
+        self.menu_dirty , self.notify_dirty , self.status_dirty = True , True , True
 
         pygame.display.init()
         pygame.font.init()
@@ -77,14 +77,21 @@ class UI(Generic_UI):
         Notifies the user with some message.
         """
         if isinstance(message , Result):
-            self.text_output.push(message.message)
+            message = message.message
         elif isinstance(message , str):
-            self.text_output.push(message)
+            message = message
         else:
-            self.text_output.push(f"{message}")
-        self.notify_canvas.fill(self.text_output.theme.body_color)
-        self.text_output.draw(self.notify_canvas)
-        self.framebuffer.show(self.canvas)
+            message = f"{message}"
+
+        self.text_output.push(message)
+        self.notify_dirty = True
+
+    def _draw_Notify(self):
+        if self.notify_dirty:
+            self.notify_canvas.fill(self.text_output.theme.body_color)
+            self.text_output.draw(self.notify_canvas)
+            self.framebuffer.show(self.canvas)
+            self.notify_dirty = False
 
     def get_Do_Command(self , print_session):
         """
@@ -93,14 +100,17 @@ class UI(Generic_UI):
         turns , pressed = self.input.read()
         if turns or pressed:
             self.main_handler.do_Input(turns , pressed)
-            self.dirty = True
+            self.menu_dirty = True
 
-        if self.dirty:
-            self.menu_canvas.fill(self.themes[0].body_color)
-            self.main_handler.draw(self.menu_canvas , self.themes)
+        self._draw_Menu_Area(self.main_handler , self.menu_canvas)
+        self._draw_Notify()
+
+    def _draw_Menu_Area(self , handler , menu_canvas):
+        if self.menu_dirty:
+            menu_canvas.fill(self.themes[0].body_color)
+            handler.draw(menu_canvas , self.themes)
             self.framebuffer.show(self.canvas)
             self.dirty = False
-        return
 
     def poll_During_Print(self , print_session):
         """
@@ -113,14 +123,11 @@ class UI(Generic_UI):
         while not self.stop_event.is_set():
             turns , pressed = self.input.read()
             if turns or pressed:
-                self.main_handler.do_Input(turns , pressed)
+                self.print_handler.do_Input(turns , pressed)
                 self.dirty = True
 
-            if self.dirty:
-                self.menu_canvas.fill(self.themes[0].body_color)
-                self.main_handler.draw(self.menu_canvas , self.themes)
-                self.framebuffer.show(self.canvas)
-                self.dirty = False
+            self._draw_Menu_Area(self.main_handler , self.menu_canvas)
+            self._draw_Notify()
 
     def _run_Command(self , wait = None):
         try:
@@ -143,9 +150,13 @@ class UI(Generic_UI):
         self.thread = threading.Thread(target = self._ui_Loop , daemon=True)
         self.thread.start()
         
-
     def stop_Poll_During_Print(self):
+        while self.print_handler.pop():
+            pass
         self.dirty = True
+        self.stop_event.Set()
+        self.thread.join()
+        self.stop_event.clear()
 
 
     

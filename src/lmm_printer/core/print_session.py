@@ -208,14 +208,15 @@ class Print_Session:
             self.printer.start_Heaters()
             for i in range(1 , self.num_layers + 1):
                 self.current_layer = i
+
+                while self.paused and not self.stop_print:
+                    self.ui.poll_During_Print(self)
+
                 while not self.stop_print:
                     self.ui.poll_During_Print(self)
                     if self.printer.check_Heaters():
                         break
                 if self.stop_print: return Result.success("Print stopped.")
-
-                while self.paused:
-                    self.ui.poll_During_Print()
 
                 with Print_File(self.file) as print_file:
                     if i == self.num_layers: next_image = None
@@ -238,6 +239,7 @@ class Print_Session:
         finally:
             self.printing = False
             self._make_safe()
+            self.ui.stop_Poll_During_Print()
 
     def go(self):
         """

@@ -236,12 +236,14 @@ class UI(Generic_UI):
         else:
             self.notify(result)
 
-
     def start_Poll_During_Print(self):
         """
         Prints a helpful suggestion.
         """
         print("Enter h at any time for a list of commands. ")
+
+    def stop_Poll_During_Print(self):
+        return
 
     def poll_During_Print(self , print_session):
         """

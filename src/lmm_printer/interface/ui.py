@@ -35,3 +35,6 @@ class Generic_UI(ABC):
         This is the function that starts the polling during print.
         """
         ...
+
+    def stop_Poll_During_Print(self):
+        ...
