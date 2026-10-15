@@ -1,5 +1,6 @@
 import evdev
 from evdev import ecodes
+import glob , os
 
 class Encoder_Input:
     def __init__(self):
@@ -37,3 +38,10 @@ class Encoder_Input:
         for dev in self.devices:
             dev.ungrab()
             dev.close()
+
+def find_Panel(match = "mipi"):
+    for name_file in sorted(glob.glob("/sys/class/graphics/fb*/name")):
+        with open(name_file) as f:
+            if match in f.read():
+                return "/dev/" + os.path.basename(os.path.dirname(name_file))
+    raise FileNotFoundError

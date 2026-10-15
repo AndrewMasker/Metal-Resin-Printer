@@ -29,4 +29,18 @@ files:
 display:
   width: 240
   height: 240
-  menu_area_height: 200
+  menu:
+    width: 240
+    height: 200
+    x: 0
+    y: 0
+  notify:
+    width: 120
+    height: 40
+    x: 0
+    y: 200
+  status:
+    width: 120
+    height: 40
+    x: 120
+    y: 200
