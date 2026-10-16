@@ -117,12 +117,10 @@ REPO="$(cd "$DIR/.." && pwd)"
 RENDERED_GUI="$(mktemp)"
 python3 - "$REPO" "$SUDO_USER" "$DIR/lmm_printer_gui.service" > "$RENDERED_GUI" <<'PY'
 import re , sys
-node = {"root":sys.argv[1] , "user":sys.argv[2]}
+values = {"root":sys.argv[1] , "user":sys.argv[2]}
 
 def lookup(match):
-    for key in match.group(1).split("."):
-        node = node[key]
-    return str(node)
+    return str(values[match])
 
 with open(sys.argv[3]) as f:
     rendered = re.sub(r"\{\{\s*([\w.]+)\s*\}\}" , lookup , f.read())
