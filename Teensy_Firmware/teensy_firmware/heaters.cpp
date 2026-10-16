@@ -75,7 +75,7 @@ void pid_Update()
       window_start_times[i] = now_time;
     }
 
-    if (outputs[i]*window_size > (now_time - window_start_times[i]))
+    if ((outputs[i]*window_size > (now_time - window_start_times[i])) && temps[i] < max_temps[i] && temps[i] > min_temps[i])
     {
       digitalWrite(heater_pins[i] , HIGH);
       // Serial.println(outputs[0]);
