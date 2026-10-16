@@ -120,7 +120,7 @@ import re , sys
 values = {"root":sys.argv[1] , "user":sys.argv[2]}
 
 def lookup(match):
-    return str(values[match])
+    return str(values[match.group(1)])
 
 with open(sys.argv[3]) as f:
     rendered = re.sub(r"\{\{\s*([\w.]+)\s*\}\}" , lookup , f.read())
