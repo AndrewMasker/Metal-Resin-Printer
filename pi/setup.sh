@@ -3,6 +3,8 @@ set -euo pipefail
 trap 'echo "FAILED at line $LINENO: $BASH_COMMAND" >&2' ERR
 trap 'rm -f "${RENDERED:-}"; rm -rf "${BUILD:-}"' EXIT
 
+systemctl stop lmm_printer_gui 2>/dev/null || true
+
 # Must run with sudo
 if [[ $EUID -ne 0 ]]; then
     echo "run with sudo" >&2
@@ -103,28 +105,33 @@ fi
 echo "Display driver has been installed."
 
 # Give the user access to all the stuff they need.
-usermod -aG spi,gpio,video,input,dialout $SUDO_USER
-echo "User given framebuffer access."
+usermod -aG spi,gpio,video,input,dialout,i2c $SUDO_USER
+echo "User given access to needed functionality."
 
 # Commands that must be run to ensure everything works properly
 systemctl disable hciuart 2>/dev/null || true
 echo "Required commands have been run."
 
-SERV=/etc/systemd/system/
+SERV=/etc/systemd/system
 REPO="$(cd "$DIR/.." && pwd)"
-RENDERED="$(mktemp)"
-python3 - "$REPO" "$DIR/lmm_printer_gui.service" > "$RENDERED" <<'PY'
+RENDERED_GUI="$(mktemp)"
+python3 - "$REPO" "$SUDO_USER" "$DIR/lmm_printer_gui.service" > "$RENDERED_GUI" <<'PY'
 import re , sys , yaml
-repo_path = sys.argv[1]
+node = {"user":sys.argv[1] , "root":sys.argv[2]}
 
-with open(sys.argv[2]) as f:
-    rendered = re.sub(r"\{\{\s*([\w.]+)\s*\}\}" , repo_path , f.read())
+def lookup(match):
+    node = cfg
+    for key in match.group(1).split("."):
+        node = node[key]
+    return str(node)
+
+with open(sys.argv[3]) as f:
+    rendered = re.sub(r"\{\{\s*([\w.]+)\s*\}\}" , lookup , f.read())
     print(rendered , end = "")
 PY
-cp "$RENDERED" "$SERV/lmm_printer_gui.service"
+install -m 644 "$RENDERED_GUI" "$SERV/lmm_printer_gui.service"
 
 sudo systemctl daemon-reload
-sudo systemctl enable --now lmm_printer_gui.service
-journalctl -u lmm_printer_gui -f
+sudo systemctl enable lmm_printer_gui.service
 
-echo "If this is the first install or you updated config.txt or cmdline.txt, you must reboot the pi. Else you can continue."
+echo "Reboot the Pi for changes to fully take effect."
