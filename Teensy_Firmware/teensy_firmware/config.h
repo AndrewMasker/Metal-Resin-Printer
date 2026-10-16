@@ -60,8 +60,8 @@ constexpr int resolution_mode_to_bits[4] = {8 , 10 , 12};
 constexpr int resolution_mode_to_adc_max[4] = {255 , 1023 , 4095};
 constexpr int averaging_mode = 1;
 constexpr int averaging_mode_to_n[4] = {4 , 8 , 16 , 32};
-constexpr int max_temps[num_heater] = {100 , 100 , 100};
-constexpr int min_temps[num_heaters] = {0 , 0 , 0};
+constexpr int max_temps[num_heaters] = {100 , 100};
+constexpr int min_temps[num_heaters] = {0 , 0};
 
 
 
