@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 trap 'echo "FAILED at line $LINENO: $BASH_COMMAND" >&2' ERR
-trap 'rm -f "${RENDERED:-}"; rm -rf "${BUILD:-}"' EXIT
-
-systemctl stop lmm_printer_gui 2>/dev/null || true
+trap 'rm -f "${RENDERED:-}"; rm -f "${RENDERED_GUI:-}"; rm -rf "${BUILD:-}"' EXIT
 
 # Must run with sudo
 if [[ $EUID -ne 0 ]]; then
@@ -11,6 +9,8 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 : "${SUDO_USER:?Even if you are root you must run with sudo.}"
+
+systemctl stop lmm_printer_gui 2>/dev/null || true
 
 # Get the directory of the setup.sh script
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -116,11 +116,10 @@ SERV=/etc/systemd/system
 REPO="$(cd "$DIR/.." && pwd)"
 RENDERED_GUI="$(mktemp)"
 python3 - "$REPO" "$SUDO_USER" "$DIR/lmm_printer_gui.service" > "$RENDERED_GUI" <<'PY'
-import re , sys , yaml
-node = {"user":sys.argv[1] , "root":sys.argv[2]}
+import re , sys
+node = {"root":sys.argv[1] , "user":sys.argv[2]}
 
 def lookup(match):
-    node = cfg
     for key in match.group(1).split("."):
         node = node[key]
     return str(node)
@@ -130,8 +129,10 @@ with open(sys.argv[3]) as f:
     print(rendered , end = "")
 PY
 install -m 644 "$RENDERED_GUI" "$SERV/lmm_printer_gui.service"
+echo "Rendered the gui service."
 
-sudo systemctl daemon-reload
-sudo systemctl enable lmm_printer_gui.service
+systemctl daemon-reload
+systemctl enable lmm_printer_gui.service
+echo "Enabled the gui service."
 
 echo "Reboot the Pi for changes to fully take effect."
