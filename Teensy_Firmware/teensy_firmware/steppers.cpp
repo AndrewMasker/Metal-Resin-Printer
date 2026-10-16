@@ -176,19 +176,19 @@ static bool is_Out_Of_Bounds(int id , float position)
 
 void move_Stepper_Relative(int id , float move)
 {
-  if (id < 0 || id >= num_axes || is_Out_Of_Bounds(id , axes[id].getCurrentPositionDistance() + move)) return;
+  if (id < 0 || id >= num_axes || is_Out_Of_Bounds(id , axes[id].getCurrentPositionDistance() + move)) Link.print("M"); Link.println(id); return;
   axes[id].moveRelative(move);
 }
 
 void move_Stepper_Absolute(int id , float move)
 {
-  if (id < 0 || id >= num_axes || is_Out_Of_Bounds(id , move)) return;
+  if (id < 0 || id >= num_axes || is_Out_Of_Bounds(id , move)) Link.print("M"); Link.println(id); return;
   axes[id].moveToDistance(move);
 }
 
 void home_Stepper(int id)
 {
-  if (id < 0 || id >= num_axes) return;
+  if (id < 0 || id >= num_axes) Link.print("H"); Link.println(id); return;
   // Serial.print("home "); Serial.print(id);
   // Serial.print(" fast="); Serial.print(fast_homing_speeds_steps[id]);
   homing_phase[id] = FAST;
@@ -196,7 +196,7 @@ void home_Stepper(int id)
 
 void move_To_Top(int id)
 {
-  if (id < 0 || id >= num_axes) return;
+  if (id < 0 || id >= num_axes) Link.print("M"); Link.println(id); return;
   axes[id].moveToDistance(max_travel[id]);
 }
 

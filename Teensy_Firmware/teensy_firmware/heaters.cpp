@@ -92,11 +92,13 @@ void pid_Update()
 
 void set_Heater_Setpoint(int id , float setpoint)
 {
+  if (id < 0 || id >= num_heaters) return;
   setpoints[id] = setpoint;
 }
 
 float return_Temp(int id)
 {
+  if (id < 0 || id >= num_probes) return -10000;
   return temps[id];
 }
 

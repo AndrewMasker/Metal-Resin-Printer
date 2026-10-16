@@ -44,7 +44,7 @@ static void handle_Command(char *command)
   {
     int stepper_id = atoi(command + 2);
     float pos = get_Axis_Position(stepper_id);
-    Link.print("GP"); Link.print(stepper_id); Link.print(" "); Link.println(pos); 
+    Link.print("GP"); Link.print(stepper_id); Link.print(" "); Link.println(pos , 4); 
   }
 
   else if ((command[0] == 'S') & (command[1] == 'P'))
@@ -152,11 +152,14 @@ void poll_For_Commands()
   while (Link.available())
   {
       char c = Link.read();
-      if (c == '\n')
+      if (c == '\n' || c == '\r')
       {
-        buffer[length] = 0;
-        handle_Command(buffer);
-        length = 0;
+        if (length > 0)
+        {
+          buffer[length] = 0;
+          handle_Command(buffer);
+          length = 0;
+        }
       }
       else if (length < (int)sizeof(buffer) - 1)
       {
