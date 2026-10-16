@@ -102,12 +102,29 @@ if [[ -d /sys/module/panel_mipi_dbi ]]; then
 fi
 echo "Display driver has been installed."
 
-# Give the user access to the framebuffer.
-usermod -aG video,input $SUDO_USER
+# Give the user access to all the stuff they need.
+usermod -aG spi,gpio,video,input,dialout $SUDO_USER
 echo "User given framebuffer access."
 
 # Commands that must be run to ensure everything works properly
 systemctl disable hciuart 2>/dev/null || true
 echo "Required commands have been run."
+
+SERV=/etc/systemd/system/
+REPO="$(cd "$DIR/.." && pwd)"
+RENDERED="$(mktemp)"
+python3 - "$REPO" "$DIR/lmm_printer_gui.service" > "$RENDERED" <<'PY'
+import re , sys , yaml
+repo_path = sys.argv[1]
+
+with open(sys.argv[2]) as f:
+    rendered = re.sub(r"\{\{\s*([\w.]+)\s*\}\}" , repo_path , f.read())
+    print(rendered , end = "")
+PY
+cp "$RENDERED" "$SERV/lmm_printer_gui.service"
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now lmm_printer_gui.service
+journalctl -u lmm_printer_gui -f
 
 echo "If this is the first install or you updated config.txt or cmdline.txt, you must reboot the pi. Else you can continue."

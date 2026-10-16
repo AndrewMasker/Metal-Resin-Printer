@@ -1,0 +1,14 @@
+[Unit]
+Description=LMM Printer GUI
+After=local-fs.target
+
+[Service]
+User=rpizerow_1
+WorkingDirectory={{root}}
+ExecStart={{root}}/.venv/bin/python -m lmm_printer --gui
+Environment=PYTHONBUFFERED=1
+Restart=on-failure
+RetartSec=2
+
+[Install]
+WantedBy=multi-user.target
