@@ -154,4 +154,8 @@ systemctl daemon-reload
 systemctl enable lmm_udiskie.service
 echo "Enabled the udiskie service."
 
+install -m 644 "$DIR/lmm_printer_kernel_modules.conf" /etc/modules-load.d/lmm_printer_modules.conf
+systemctl restart systemd-modules-load.service
+echo "Required kernel modules loaded."
+
 echo "Reboot the Pi for changes to fully take effect."
