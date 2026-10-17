@@ -11,7 +11,7 @@ def return_RM_Drives():
         Result: On success the value is a list of drives. On error,
             the message says what failed.
     """
-    out = subprocess.check_output(["lsblk" , "-J" , "-o" , "NAME,TYPE,RM,FSTYPE,MOUNTPOINT,PATH"] , text=True)
+    out = subprocess.check_output(["lsblk" , "-J" , "-o" , "NAME,TYPE,FSTYPE,MOUNTPOINT,PATH"] , text=True)
     tree = json.loads(out)
 
     drives = []
