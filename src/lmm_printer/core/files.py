@@ -21,7 +21,7 @@ def return_RM_Drives():
             rm = d.get("rm")
             fstype = d.get("fstype")
             mnt = d.get("mountpoint")
-            if d.get("type") == "part" and rm and fstype and mnt:
+            if d.get("type") in ("part" , "disk") and fstype and mnt and mnt.startswith("/media/"):
                 drives.append((d["path"] , mnt))
             walk(d.get("children" , []))
 
