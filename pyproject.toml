@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [tool.lmm_printer]
-apt_pckgs = ["python3-numpy" , "python3-smbus" , "python3-spidev" , "python3-pil" , "python3-yaml" , "python3-pygame" , "python3-evdev"]
+apt_pckgs = ["udisks2" , "udiskie" , "python3-numpy" , "python3-smbus" , "python3-spidev" , "python3-pil" , "python3-yaml" , "python3-pygame" , "python3-evdev"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

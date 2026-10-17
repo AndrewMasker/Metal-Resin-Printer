@@ -113,6 +113,7 @@ systemctl disable hciuart 2>/dev/null || true
 echo "Required commands have been run."
 
 SERV=/etc/systemd/system
+
 REPO="$(cd "$DIR/.." && pwd)"
 RENDERED_GUI="$(mktemp)"
 python3 - "$REPO" "$SUDO_USER" "$DIR/lmm_printer_gui.service" > "$RENDERED_GUI" <<'PY'
@@ -128,9 +129,28 @@ with open(sys.argv[3]) as f:
 PY
 install -m 644 "$RENDERED_GUI" "$SERV/lmm_printer_gui.service"
 echo "Rendered the gui service."
-
 systemctl daemon-reload
 systemctl enable lmm_printer_gui.service
 echo "Enabled the gui service."
+
+install -m 644 "$DIR/50_lmm_udisks.rules" /etc/polkit-1/rules.d/50_lmm_udisks.rules
+echo "Installed the udisks rules."
+
+python3 - "$SUDO_USER" "$DIR/lmm_udiskie.service" > "$RENDERED_UDISKIE" <<'PY'
+import re , sys
+values = {"user":sys.argv[1]}
+
+def lookup(match):
+return str(values[match.group(1)])
+
+with open(sys.argv[3]) as f:
+    rendered = re.sub(r"\{\{\s*([\w.]+)\s*\}\}" , lookup , f.read())
+    print(rendered , end = "")
+PY
+install -m 644 "$RENDERED_UDISKIE" "$SERV/lmm_udiskie.service"
+echo "Rendered the udiskie service."
+systemctl daemon-reload
+systemctl enable lmm_udiskie.service
+echo "Enabled the udiskie service."
 
 echo "Reboot the Pi for changes to fully take effect."

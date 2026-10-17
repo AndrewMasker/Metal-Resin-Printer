@@ -1,0 +1,13 @@
+[Unit]
+Description=udiskie automounter
+After=udisks2.service
+Wants=udisks2.service
+
+[Service]
+User={{user}}
+ExecStart=/usr/bin/udiskie --automount --no-notify --no-tray
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
