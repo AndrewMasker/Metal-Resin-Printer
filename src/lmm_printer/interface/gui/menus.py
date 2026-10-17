@@ -12,6 +12,9 @@ class Menu_Handler():
     def __init__(self , init_menu , notify):
         self.menu_stack = [Menu_Frame(menu=init_menu)]
         self.notify = notify
+        result = self._make_Cursor_Valid()
+        if result.bad:
+            self.notify(result)
 
     def push(self , menu):
         if not menu:

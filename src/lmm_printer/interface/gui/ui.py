@@ -28,6 +28,7 @@ class UI(Generic_UI):
         panel_path = find_Panel()
         self.framebuffer = Framebuffer(panel_path , (width , height))
 
+        font = pygame.font.SysFont("Arial", 10)
         self.text_output = Text_Output(self.config["display"]["notify"]["max_lines"] , Theme(font=font))
         self._init_Poll_During_Print()
         self._set_Menu_Handlers(print_session)
