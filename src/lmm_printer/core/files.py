@@ -18,7 +18,6 @@ def return_RM_Drives():
 
     def walk(devices):
         for d in devices:
-            rm = d.get("rm")
             fstype = d.get("fstype")
             mnt = d.get("mountpoint")
             if d.get("type") in ("part" , "disk") and fstype and mnt and mnt.startswith("/media/"):

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 trap 'echo "FAILED at line $LINENO: $BASH_COMMAND" >&2' ERR
-trap 'rm -f "${RENDERED:-}"; rm -f "${RENDERED_GUI:-}"; rm -rf "${BUILD:-}"' EXIT
+trap 'rm -f "${RENDERED:-}"; rm -f "${RENDERED_GUI:-}"; rm -f "${RENDERED_UDISKIE:-}"; rm -rf "${BUILD:-}"' EXIT
 
 # Must run with sudo
 if [[ $EUID -ne 0 ]]; then
@@ -105,7 +105,7 @@ fi
 echo "Display driver has been installed."
 
 # Give the user access to all the stuff they need.
-usermod -aG spi,gpio,video,input,dialout,i2c $SUDO_USER
+usermod -aG spi,gpio,video,input,dialout,i2c,plugdev $SUDO_USER
 echo "User given access to needed functionality."
 
 # Commands that must be run to ensure everything works properly
@@ -136,14 +136,15 @@ echo "Enabled the gui service."
 install -m 644 "$DIR/50_lmm_udisks.rules" /etc/polkit-1/rules.d/50_lmm_udisks.rules
 echo "Installed the udisks rules."
 
+RENDERED_UDISKIE="$(mktemp)"
 python3 - "$SUDO_USER" "$DIR/lmm_udiskie.service" > "$RENDERED_UDISKIE" <<'PY'
 import re , sys
 values = {"user":sys.argv[1]}
 
 def lookup(match):
-return str(values[match.group(1)])
+    return str(values[match.group(1)])
 
-with open(sys.argv[3]) as f:
+with open(sys.argv[2]) as f:
     rendered = re.sub(r"\{\{\s*([\w.]+)\s*\}\}" , lookup , f.read())
     print(rendered , end = "")
 PY
