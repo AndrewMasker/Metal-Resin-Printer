@@ -38,6 +38,16 @@ class Print_Session:
     def notify(self , message):
         self.ui.notify(message)
 
+    def get_Status(self):
+        status = Session_Status()
+        if self.file is not None:
+            status.file_name = self.file.name
+            status.num_layers = self.num_layers
+        if self.printer is not None:
+            status.hardware_connected = True
+            status.state = self.printer.state
+        status.printing = self.printing
+        return status
 
     def _add_State_File_To_Config(self):
         """
@@ -232,7 +242,7 @@ class Print_Session:
                 start_time = monotonic()
                 self.printer.do_Current_Layer(next_image , self.options)
                 end_time = monotonic()
-                self.notify("Layer " + str(i) + " of " + str(self.num_layers) + " done. Took: " + str(end_time - start_time) + " seconds.")
+                self.notify(f"Layer {i} of {self.num_layers} done. Took: {(end_time - start_time):.2f} seconds.")
             return Result.success("Print complete.")
         except Exception as e:
             return Result.error(f"Print failed on layer {self.current_layer}. Error was: {e}.")

@@ -1,7 +1,7 @@
 import time
 import RPi.GPIO as GPIO
 from lmm_printer.core.files import save_Printer_State , load_Printer_State
-from lmm_printer.core.types import Printer_State , NUM_AXES
+from lmm_printer.core.types import Printer_State , NUM_AXES , NUM_PROBES
 from lmm_printer.utils.vendored_handling import silence
 
 class Printer:
@@ -11,6 +11,7 @@ class Printer:
         self.config = config
         self.teensy.start_Thread()
         self.listening_for = []
+        self.return_Current_State()
 
     def home_Axis(self , axis_id , wait = True , listen = True):
         command = "H" + str(axis_id)
@@ -189,9 +190,14 @@ class Printer:
         pos = []
         for i in range(NUM_AXES):
             pos.append(self.get_Axis_Position(i))
+        temps = []
+        for i in range(NUM_PROBES):
+            temps.append(self.get_Temp(i))
 
         state = Printer_State()
         state.pos = pos
+        state.temps = temps
+        self.state = state
         return state
 
     def save_State(self , safe_shutdown = False):

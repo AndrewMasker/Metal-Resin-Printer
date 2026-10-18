@@ -4,6 +4,7 @@ from lmm_printer.interface.gui.menus import Menu_Handler , main_Menu , print_Men
 from lmm_printer.interface.gui.input import Encoder_Input
 from lmm_printer.interface.gui.display import Framebuffer , find_Panel
 from lmm_printer.interface.gui.text_output import Text_Output
+from lmm_printer.interface.gui.status_output import Status_Output
 from lmm_printer.core.types import Result
 import threading , queue
 import pygame
@@ -30,6 +31,10 @@ class UI(Generic_UI):
 
         font = pygame.font.SysFont("Arial", 10)
         self.text_output = Text_Output(self.config["display"]["notify"]["max_lines"] , Theme(font=font))
+
+        font = pygame.font.SysFont("Arial", 10)
+        self.status_output = Status_Output(Theme(font=font))
+
         self._init_Poll_During_Print()
         self._set_Menu_Handlers(print_session)
         
@@ -94,6 +99,12 @@ class UI(Generic_UI):
             self.text_output.draw(self.notify_canvas)
             self.framebuffer.show(self.canvas)
 
+    def _draw_Status(self , print_session):
+        status = print_session.get_Status()
+        dirty = self.status_output.set_Status(status)
+        if dirty:
+            self.status_output.draw(self.status_canvas)
+
     def get_Do_Command(self , print_session):
         """
         This is a blocking idle menu that waits until a command is recieved and does it.
@@ -105,6 +116,7 @@ class UI(Generic_UI):
 
         self._draw_Menu_Area(self.main_handler , self.menu_canvas)
         self._draw_Notify()
+        self._draw_Status()
 
     def _draw_Menu_Area(self , handler , menu_canvas):
         if self.menu_dirty:
@@ -130,6 +142,7 @@ class UI(Generic_UI):
 
             self._draw_Menu_Area(self.print_handler , self.menu_canvas)
             self._draw_Notify()
+            self._draw_Status()
 
     def _run_Command(self , wait = None):
         try:

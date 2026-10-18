@@ -37,10 +37,7 @@ class Result(Generic[T]):
     def error(cls , message , value = None):
         return cls(value=value , state = State.ERROR , message=message)
 
-@dataclass
-class Printer_State:
-    pos: list = field(default_factory=lambda:[0 , 0 , 0])
-    safe_shutdown: bool = False
+
 
 class NanoDLP_File:
     def __init__(self , path):
@@ -114,6 +111,15 @@ class Move_Method(Enum):
 AXIS_NAMES = ("reservoir" , "build" , "recoater")
 NUM_AXES = len(AXIS_NAMES)
 
+PROBE_NAMES = ("chamber" , "recoater heater" , "recoater front")
+NUM_PROBES = len(PROBE_NAMES)
+
+@dataclass
+class Printer_State:
+    pos: tuple = (0,) * NUM_AXES
+    temps: tuple = (0,) * NUM_PROBES
+    safe_shutdown: bool = False
+
 @dataclass
 class Session_Status:
     hardware_connected: bool = False
@@ -121,3 +127,4 @@ class Session_Status:
     num_layers: int = None
     printing: bool = False
     current_layer: int = None
+    state: Printer_State = Printer_State()
