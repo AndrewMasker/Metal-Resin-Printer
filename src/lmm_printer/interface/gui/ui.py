@@ -119,7 +119,7 @@ class UI(Generic_UI):
 
         self._draw_Menu_Area(self.main_handler , self.menu_canvas)
         self._draw_Notify()
-        self._draw_Status(print_session)
+        self._draw_Status()
 
     def _draw_Menu_Area(self , handler , menu_canvas):
         if self.menu_dirty:
@@ -145,7 +145,7 @@ class UI(Generic_UI):
 
             self._draw_Menu_Area(self.print_handler , self.menu_canvas)
             self._draw_Notify()
-            self._draw_Status(self.print_session)
+            self._draw_Status()
 
     def _run_Command(self , wait = None):
         try:

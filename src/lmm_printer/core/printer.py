@@ -212,6 +212,8 @@ class Printer:
         for i in range(NUM_AXES):
             self.set_Axis_Position(i , state.pos[i])
 
+        self.return_Current_State()
+
         return state
 
     def safe_Shutdown(self):

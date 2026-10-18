@@ -127,4 +127,4 @@ class Session_Status:
     num_layers: int = None
     printing: bool = False
     current_layer: int = None
-    state: Printer_State = field(default_factory=Printer_State())
+    state: Printer_State = field(default_factory=Printer_State)

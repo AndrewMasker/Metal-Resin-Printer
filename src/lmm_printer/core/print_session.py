@@ -46,7 +46,9 @@ class Print_Session:
         if self.printer is not None:
             status.hardware_connected = True
             status.state = self.printer.state
-        status.printing = self.printing
+        if self.printing:
+            status.printing = True
+            status.current_layer = self.current_layer
         return status
 
     def _add_State_File_To_Config(self):

@@ -3,11 +3,15 @@ import pygame
 
 class Status_Output:
     def __init__(self , theme):
-        self.has_drawn = False
+        self.first_set = True
         self.status = Session_Status()
         self.theme = theme
 
     def set_Status(self , status):
+        if self.first_set:
+            self.first_set = False
+            self.status = status
+            return True
         if self.status == status:
             return False
         else:
