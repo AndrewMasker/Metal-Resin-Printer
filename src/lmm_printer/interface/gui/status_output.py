@@ -19,7 +19,10 @@ class Status_Output:
             return True
 
     def _get_Initials(self , string):
-        initials = "".join(word[0].upper() for word in string.split())
+        if len(string.split())>1:
+            initials = "".join(word[0].upper() for word in string.split()) 
+        else:
+            initials = "".join(word[:3].upper() for word in string.split())
         return initials
 
     def draw(self , canvas):

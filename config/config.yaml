@@ -31,17 +31,17 @@ display:
   height: 240
   menu:
     width: 240
-    height: 180
+    height: 160
     x: 0
     y: 0
   notify:
     width: 160
-    height: 60
+    height: 80
     x: 0
-    y: 180
+    y: 160
     max_lines: 10
   status:
     width: 80
-    height: 60
+    height: 80
     x: 160
-    y: 180
+    y: 160

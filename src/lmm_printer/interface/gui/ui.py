@@ -33,7 +33,7 @@ class UI(Generic_UI):
         font = pygame.font.SysFont("Arial", 10)
         self.text_output = Text_Output(self.config["display"]["notify"]["max_lines"] , Theme(font=font))
 
-        font = pygame.font.SysFont("Arial", 10)
+        font = pygame.font.SysFont("Arial", 9)
         self.status_output = Status_Output(Theme(font=font))
 
         self._init_Poll_During_Print()
