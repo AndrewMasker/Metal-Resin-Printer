@@ -244,7 +244,7 @@ class Print_Session:
                 start_time = monotonic()
                 self.printer.do_Current_Layer(next_image , self.options)
                 end_time = monotonic()
-                self.notify(f"Layer {i} of {self.num_layers} done. Took: {(end_time - start_time):.2f} seconds.")
+                self.notify(f"Layer {i}/{self.num_layers} done in {(end_time - start_time):.1f} s.")
             return Result.success("Print complete.")
         except Exception as e:
             return Result.error(f"Print failed on layer {self.current_layer}. Error was: {e}.")
