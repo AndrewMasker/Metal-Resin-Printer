@@ -40,6 +40,6 @@ class Status_Output:
             offset += text.get_height()
 
         for i , text in enumerate(text_list):
-            rect = pygame.Rect(0 , offset_list[i] , text.get_width() , text.get_height())
+            rect = pygame.Rect(0 , offset_list[i] , canvas.get_width() , text.get_height())
             if not canvas.get_rect().contains(rect): continue
             canvas.blit(text , (self.theme.gaps , offset_list[i]))
