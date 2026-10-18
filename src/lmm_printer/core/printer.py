@@ -90,8 +90,10 @@ class Printer:
         chamber_good = False
         recoater_good = False
 
-        chamber_temp = self.get_Temp(0)
-        recoater_temp = self.get_Temp(2)
+        state = self.return_Current_State()
+
+        chamber_temp = state.temps[0]
+        recoater_temp = state.temps[2]
 
         if (self.set_chamber_temp != self.config["chamber"]["temp"]) or (self.set_recoater_temp != self.config["recoater"]["temp"]):
             self.start_Heaters()

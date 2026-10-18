@@ -294,16 +294,3 @@ class Print_Session:
             self.printer.save_State()
         except Exception as e:
             pass
-
-    def get_Status(self):
-        session_status = Session_Status()
-        if self.printer is not None:
-            session_status.hardware_connected = True
-        if self.file is not None:
-            session_status.file_name = self.file.name
-            session_status.num_layers = self.num_layers
-        if self.printing:
-            session_status.printing = self.printing
-            session_status.current_layer = self.current_layer
-        return session_status
-        

@@ -3,6 +3,7 @@ import pygame
 
 class Status_Output:
     def __init__(self , theme):
+        self.has_drawn = False
         self.status = Session_Status()
         self.theme = theme
 
@@ -18,11 +19,11 @@ class Status_Output:
         hard_conn = self.status.hardware_connected
         lines.append(f"Hardware: {hard_conn}")
         for axis_id in range(NUM_AXES):
-            lines.append(f"{AXIS_NAMES[axis_id].title()}: {self.status.state.pos[axis_id] if hard_conn else "*"}")
+            lines.append(f"{AXIS_NAMES[axis_id].title()}: {self.status.state.pos[axis_id] if hard_conn else '*'}")
         for probe_id in range(NUM_PROBES):
-            lines.append(f"{PROBE_NAMES[probe_id].title()}: {self.status.state.temps[probe_id] if hard_conn else "*"}")
-        lines.append(f"File: {self.status.file_name.name if self.status.file_name is not None else "None"}")
-        lines.append(f"Layer: {self.status.current_layer if self.status.current_layer is not None else "*"}/{self.status.num_layers if self.status.num_layers is not None else "*"}")
+            lines.append(f"{PROBE_NAMES[probe_id].title()}: {self.status.state.temps[probe_id] if hard_conn else '*'}")
+        lines.append(f"File: {self.status.file_name if self.status.file_name is not None else 'None'}")
+        lines.append(f"Layer: {self.status.current_layer if self.status.current_layer is not None else '*'}/{self.status.num_layers if self.status.num_layers is not None else '*'}")
         lines.append(f"Printing: {self.status.printing}")
 
         text_list = []

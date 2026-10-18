@@ -12,6 +12,7 @@ import pygame
 class UI(Generic_UI):
     def __init__(self , print_session , config):
         self.config = config
+        self.print_session = print_session
         self.menu_dirty , self.notify_dirty , self.status_dirty = True , True , True
 
         pygame.display.init()
@@ -36,7 +37,7 @@ class UI(Generic_UI):
         self.status_output = Status_Output(Theme(font=font))
 
         self._init_Poll_During_Print()
-        self._set_Menu_Handlers(print_session)
+        self._set_Menu_Handlers()
         
 
     def _set_canvases(self):
@@ -65,11 +66,11 @@ class UI(Generic_UI):
         status_rect = pygame.Rect(status_x , status_y , status_width , status_height)
         self.status_canvas = self.canvas.subsurface(status_rect)
 
-    def _set_Menu_Handlers(self , print_session):
-        main_menu = main_Menu(print_session , self.notify)
+    def _set_Menu_Handlers(self):
+        main_menu = main_Menu(self.print_session , self.notify)
         self.main_handler = Menu_Handler(main_menu , self.notify)
 
-        print_menu = print_Menu(print_session , self.notify , self.commands)
+        print_menu = print_Menu(self.print_session , self.notify , self.commands)
         self.print_handler = Menu_Handler(print_menu , self.notify)
 
     def start(self):
@@ -99,11 +100,13 @@ class UI(Generic_UI):
             self.text_output.draw(self.notify_canvas)
             self.framebuffer.show(self.canvas)
 
-    def _draw_Status(self , print_session):
-        status = print_session.get_Status()
+    def _draw_Status(self):
+        status = self.print_session.get_Status()
         dirty = self.status_output.set_Status(status)
         if dirty:
+            self.status_canvas.fill(self.status_output.theme.body_color)
             self.status_output.draw(self.status_canvas)
+            self.framebuffer.show(self.canvas)
 
     def get_Do_Command(self , print_session):
         """
@@ -116,7 +119,7 @@ class UI(Generic_UI):
 
         self._draw_Menu_Area(self.main_handler , self.menu_canvas)
         self._draw_Notify()
-        self._draw_Status()
+        self._draw_Status(print_session)
 
     def _draw_Menu_Area(self , handler , menu_canvas):
         if self.menu_dirty:
@@ -142,7 +145,7 @@ class UI(Generic_UI):
 
             self._draw_Menu_Area(self.print_handler , self.menu_canvas)
             self._draw_Notify()
-            self._draw_Status()
+            self._draw_Status(self.print_session)
 
     def _run_Command(self , wait = None):
         try:
