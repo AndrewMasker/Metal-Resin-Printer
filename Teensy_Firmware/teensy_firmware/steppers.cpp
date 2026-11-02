@@ -216,6 +216,18 @@ void set_Axis_Position(int id , float pos)
 
 }
 
+bool axes_Idle()
+{
+  for (int i = 0; i < num_axes; i++)
+  {
+    if (homing_phase[i] != NIL || axes[i].distanceToGo() != 0)
+    {
+      return false;
+    }
+    return true;
+  }
+}
+
 
 
 

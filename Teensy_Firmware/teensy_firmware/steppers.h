@@ -9,3 +9,4 @@ void home_Stepper(int id);
 void move_To_Top(int id);
 float get_Axis_Position(int id);
 void set_Axis_Position(int id , float pos);
+bool axes_Idle()

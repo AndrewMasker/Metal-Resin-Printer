@@ -1,11 +1,13 @@
 //heaters.cpp
 #include "heaters.h"
 #include "config.h"
+#include "steppers.h"
 #include <QuickPID.h>
 #include <algorithm>
 #include <Arduino.h>
 
 static int last_temp_read_times[num_probes] = {0};
+static unsigned long last_ir_good_time = 0;
 static const int adc_max = resolution_mode_to_adc_max[resolution_mode];
 static float temps[num_probes];
 static float outputs[num_heaters];
@@ -14,8 +16,8 @@ static int window_start_times[num_heaters] = {0 , 0};
 
 static QuickPID pids[num_heaters] = 
 {
-  QuickPID(&temps[0] , &outputs[0] , &setpoints[0] , kps[0] , kis[0] , kds[0] , QuickPID::pMode::pOnError , QuickPID::dMode::dOnMeas , QuickPID::iAwMode::iAwClamp , QuickPID::Action::direct) , 
-  QuickPID(&temps[1] , &outputs[1] , &setpoints[1] , kps[1] , kis[1] , kds[1] , QuickPID::pMode::pOnError , QuickPID::dMode::dOnMeas , QuickPID::iAwMode::iAwClamp , QuickPID::Action::direct) 
+  QuickPID(&temps[control_sensors[0]] , &outputs[0] , &setpoints[0] , kps[0] , kis[0] , kds[0] , QuickPID::pMode::pOnError , QuickPID::dMode::dOnMeas , QuickPID::iAwMode::iAwClamp , QuickPID::Action::direct) , 
+  QuickPID(&temps[control_sensors[1]] , &outputs[1] , &setpoints[1] , kps[1] , kis[1] , kds[1] , QuickPID::pMode::pOnError , QuickPID::dMode::dOnMeas , QuickPID::iAwMode::iAwClamp , QuickPID::Action::direct) 
 };
 
 void heaters_Init()
@@ -35,7 +37,7 @@ void heaters_Init()
 
 static float read_Thermister(int id)
 {
-  int raw = analogRead(probe_pins[id]);
+  int raw = analogRead(thermister_pins[id]);
   if (raw <= 0) raw = 1;
   if (raw >= adc_max) raw = adc_max - 1;
   float resistance = series_resistance[id] * (float)raw / (float)(adc_max - raw);
@@ -50,9 +52,9 @@ static float read_Thermister(int id)
 
 }
 
-static void probes_Update()
+static void thermisters_Update()
 {
-  for (int i = 0; i< num_probes; i++)
+  for (int i = 0; i< num_thermisters; i++)
   {
     if (millis() - last_temp_read_times[i] >= temp_read_intervals[i])
     {
@@ -61,6 +63,27 @@ static void probes_Update()
     }
     
   }
+}
+
+read_IR_Probe() 
+{
+  
+}
+
+static void ir_Update()
+{
+  unsigned long now_time = millis();
+  if ( (! axes_Idle()) || ( (now_time - last_ir_good_time) < ir_max_stale_age) )
+  {
+    return
+  }
+  else
+  {
+    temps[ir_sensor_id] = read_IR_Probe();
+    last_ir_good_time = now_time;
+  }
+  
+
 }
 
 void pid_Update()

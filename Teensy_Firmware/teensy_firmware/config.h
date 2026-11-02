@@ -54,9 +54,11 @@ constexpr int limit_min = {0 , 0};
 
 constexpr int ir_sda_pin = 7;
 constexpr int ir_scl_pin = 8;
-constexpr unint8_t ir_address = 0x5A;
+constexpr uint8_t ir_address = 0x5A;
 constexpr unsigned long ir_read_interval = 1000; // ms between attempts at idle
 constexpr unsigned long ir_max_stale_age = 60000; // ms over which we will set the heater 0 to zero for having a stale measurement.
+constexpr uint8_t ir_obj_addr = 0x07;
+constexpr uint8_t ir_body_addr = 0x06;
 
 constexpr int thermister_pins[num_thermisters] = {22 , 23 , 21};
 
