@@ -128,3 +128,42 @@ static bool i2c_Read(uint8_t &b , bool ack)
     return true;
 }
 
+static uint8_t crc8(const uint8_t d[] , int n)
+{
+    uint8_t c = 0;
+    for (int i = 0; i < n; i++)
+    {
+        c ^= d[i];
+        for (int b = 0; b < 8; b++)
+        {
+            c = (c & 0x80) ? (c << 1) ^ 0x07 : (c << 1);
+        }
+    }
+    return c;
+}
+
+bool read_IR_Probe(uint8_t reg , float &out)
+{
+    const uint8_t write = ir_address << 1;
+    const uint8_t read = write | 1;
+    uint8_t lsb , msb , pec
+
+    bool ok = i2c_Start() &&
+              i2c_Write(write) &&
+              i2c_Write(reg) &&
+              i2c_Start() &&
+              i2c_Write(read) &&
+              i2c_Read(lsb , true) &&
+              i2c_Read(msb , true) &&
+              i2c_Read(pec , false);
+    i2c_Stop();
+    if (!ok) return false;
+    
+    const uint8_t bytes[5] = {write , reg , read , lsb , msb};
+    if (crc8(bytes , 5) != pec) return false;
+    uint16_t raw = ((unit16_t)msb << 8) | lsb ;
+    if (raw & 0x8000) return false;
+
+    out = (raw * 0.02f) - 273.15f ;
+    return true;
+}
