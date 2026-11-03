@@ -87,7 +87,7 @@ class Printer:
         self.set_recoater_temp = self.config["recoater"]["temp"]
 
     def check_Heaters(self):
-        chamber_good = False
+        slurry_good = False
         recoater_good = False
 
         state = self.return_Current_State()

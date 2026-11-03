@@ -1,5 +1,4 @@
 from lmm_printer.core.types import Session_Status , NUM_AXES , NUM_PROBES , AXIS_NAMES , PROBE_NAMES
-import pygame
 import time
 
 class Status_Output:
@@ -10,7 +9,7 @@ class Status_Output:
 
         self.step_period = step_period
         self.scroll_index = 0
-        self.last_step_time = 0
+        self.last_step_time = time.monotonic()
         self.overflowing = False
 
     def set_Status(self , status):
