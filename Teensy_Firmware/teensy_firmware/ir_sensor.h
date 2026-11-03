@@ -1,4 +1,4 @@
-//steppers.h
+//ir_sensor.h.h
 #pragma once
 #include <stdint.h>
 

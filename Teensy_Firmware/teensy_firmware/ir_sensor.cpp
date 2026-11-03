@@ -17,9 +17,10 @@ static inline void scl_Release()
     pinMode(ir_scl_pin , INPUT);
 }
 
-static inline void sda_Low() 
+static inline void scl_Low() 
 {
     pinMode(ir_scl_pin , OUTPUT);
+    delayMicroseconds(1);
 }
 
 static inline void half_Bit()

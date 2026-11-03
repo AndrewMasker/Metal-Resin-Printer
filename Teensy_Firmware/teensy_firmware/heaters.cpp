@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <Arduino.h>
 
-static int last_temp_read_times[num_thermisters] = {0};
+static unsigned long last_temp_read_times[num_thermisters] = {0};
 static unsigned long last_ir_obj_good_time = 0;
 static unsigned long last_ir_attempt_time = 0;
 static bool ir_obj_ever_good = false;
@@ -15,7 +15,7 @@ static const int adc_max = resolution_mode_to_adc_max[resolution_mode];
 static float temps[num_probes];
 static float outputs[num_heaters];
 static float setpoints[num_heaters] = {0 , 0};
-static int window_start_times[num_heaters] = {0 , 0};
+static unsigned long window_start_times[num_heaters] = {0 , 0};
 
 static QuickPID pids[num_heaters] = 
 {
@@ -88,11 +88,11 @@ static void ir_Update()
 
 void pid_Update()
 {
-  unsigned long now_time = millis();
   thermisters_Update();
   ir_Update();
+  unsigned long now_time = millis();
   
-  bool ir_fresh = ir_obj_ever_good && (now_time - last_ir_obj_good_time) < ir_max_stale_age
+  bool ir_fresh = ir_obj_ever_good && (now_time - last_ir_obj_good_time) < ir_max_stale_age;
 
   for (int i = 0; i < num_heaters; i++)
   {
