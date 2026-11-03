@@ -1,4 +1,4 @@
-from lmm_printer.core.types import Result , Move_Method , NUM_AXES , AXIS_NAMES , Session_Status
+from lmm_printer.core.types import Result , Move_Method , NUM_AXES , AXIS_NAMES , Session_Status , PROBE_NAMES
 
 class Print_Session:
     """Holds functionality for running a print session.
@@ -171,11 +171,7 @@ class Print_Session:
 
     def get_Temps(self):
         def action():
-            temps = {}
-            temps["Chamber"] = self.printer.get_Temp(0)
-            temps["Recoater Heater"] = self.printer.get_Temp(1)
-            temps["Recoater Front"] = self.printer.get_Temp(2)
-            return temps
+            return {name.title() : self.printer.get_Temp(i) for i , name in enumerate(PROBE_NAMES)}
         description = f"Getting temps"
         return self._hardware_Action(description , action)
     

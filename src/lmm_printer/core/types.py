@@ -111,8 +111,11 @@ class Move_Method(Enum):
 AXIS_NAMES = ("reservoir" , "build" , "recoater")
 NUM_AXES = len(AXIS_NAMES)
 
-PROBE_NAMES = ("chamber" , "recoater heater" , "recoater front")
+PROBE_NAMES = ("reservoir wall" , "recoater heater" , "recoater front" , "slurry" , "ir body")
 NUM_PROBES = len(PROBE_NAMES)
+
+SLURRY_PROBE = PROBE_NAMES.index("slurry")
+RECOATER_CHECK_PROBE = PROBE_NAMES.index("recoater front")
 
 @dataclass
 class Printer_State:

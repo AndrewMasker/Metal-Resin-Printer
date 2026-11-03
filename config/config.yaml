@@ -9,8 +9,8 @@ projector:
   num_pixels_x: 2560
   num_pixels_y: 1440
 
-chamber:
-  temp: 40
+slurry:
+  temp: 50
   valid_diff: 5
 
 recoater:

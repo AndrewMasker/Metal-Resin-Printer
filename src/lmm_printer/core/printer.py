@@ -1,7 +1,7 @@
 import time
 import RPi.GPIO as GPIO
 from lmm_printer.core.files import save_Printer_State , load_Printer_State
-from lmm_printer.core.types import Printer_State , NUM_AXES , NUM_PROBES
+from lmm_printer.core.types import Printer_State , NUM_AXES , NUM_PROBES , SLURRY_PROBE , RECOATER_CHECK_PROBE
 from lmm_printer.utils.vendored_handling import silence
 
 class Printer:
@@ -80,8 +80,8 @@ class Printer:
         self.teensy.send_Command(command)
     
     def start_Heaters(self):
-        self.set_Heater(0 , self.config["chamber"]["temp"])
-        self.set_chamber_temp = self.config["chamber"]["temp"]
+        self.set_Heater(0 , self.config["slurry"]["temp"])
+        self.set_slurry_temp = self.config["slurry"]["temp"]
 
         self.set_Heater(1 , self.config["recoater"]["temp"])
         self.set_recoater_temp = self.config["recoater"]["temp"]
@@ -92,18 +92,18 @@ class Printer:
 
         state = self.return_Current_State()
 
-        chamber_temp = state.temps[0]
-        recoater_temp = state.temps[2]
+        slurry_temp = state.temps[SLURRY_PROBE]
+        recoater_temp = state.temps[RECOATER_CHECK_PROBE]
 
-        if (self.set_chamber_temp != self.config["chamber"]["temp"]) or (self.set_recoater_temp != self.config["recoater"]["temp"]):
+        if (self.set_slurry_temp != self.config["slurry"]["temp"]) or (self.set_recoater_temp != self.config["recoater"]["temp"]):
             self.start_Heaters()
         
-        if self.set_chamber_temp - self.config["chamber"]["valid_diff"] <= chamber_temp <= self.set_chamber_temp + self.config["chamber"]["valid_diff"]:
-            chamber_good = True
+        if self.set_slurry_temp - self.config["slurry"]["valid_diff"] <= slurry_temp <= self.set_slurry_temp + self.config["slurry"]["valid_diff"]:
+            slurry_good = True
         if self.set_recoater_temp - self.config["recoater"]["valid_diff"] <= recoater_temp <= self.set_recoater_temp + self.config["recoater"]["valid_diff"]:
             recoater_good = True
 
-        if chamber_good and recoater_good:
+        if slurry_good and recoater_good:
             return True
         else:
             return False
