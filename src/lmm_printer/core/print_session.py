@@ -254,7 +254,7 @@ class Print_Session:
             self.ui.stop_Poll_During_Print()
 
     def _idle_Refresh(self):
-        if self.printer is None: return
+        if self.printer is None or not self.should_go: return
         now = time.monotonic()
         if (now - self.last_refresh) < self.refresh_period: return
         self.last_refresh = now
