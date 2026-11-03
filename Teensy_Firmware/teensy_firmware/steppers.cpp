@@ -224,8 +224,8 @@ bool axes_Idle()
     {
       return false;
     }
-    return true;
   }
+  return true;
 }
 
 

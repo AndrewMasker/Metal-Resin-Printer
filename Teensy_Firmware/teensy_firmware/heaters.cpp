@@ -2,12 +2,15 @@
 #include "heaters.h"
 #include "config.h"
 #include "steppers.h"
+#include "ir_sensor.h"
 #include <QuickPID.h>
 #include <algorithm>
 #include <Arduino.h>
 
-static int last_temp_read_times[num_probes] = {0};
-static unsigned long last_ir_good_time = 0;
+static int last_temp_read_times[num_thermisters] = {0};
+static unsigned long last_ir_obj_good_time = 0;
+static unsigned long last_ir_attempt_time = 0;
+static bool ir_obj_ever_good = false;
 static const int adc_max = resolution_mode_to_adc_max[resolution_mode];
 static float temps[num_probes];
 static float outputs[num_heaters];
@@ -22,6 +25,7 @@ static QuickPID pids[num_heaters] =
 
 void heaters_Init()
 {
+  ir_Sensor_Init();
   analogReadResolution(resolution_mode_to_bits[resolution_mode]);
   analogReadAveraging(averaging_mode_to_n[averaging_mode]);
 
@@ -68,19 +72,18 @@ static void thermisters_Update()
 static void ir_Update()
 {
   unsigned long now_time = millis();
-  if ( (! axes_Idle()) || ( (now_time - last_ir_good_time) < ir_max_stale_age) )
+  if ( (! axes_Idle()) || ( (now_time - last_ir_attempt_time) < ir_read_interval) )
   {
-    return
+    return;
   }
-  else
-  {
-    static bool obj_good = read_IR_Probe(ir_obj_addr , temps[ir_obj_id]);
-    static bool body_good = read_IR_Probe(ir_body_addr , temps[ir_body_id]);
-    if ( (!obj_good) || (!body_good) ) return ;
-    last_ir_good_time = now_time;
-  }
-  
+  last_ir_attempt_time = now_time;
 
+  if(read_IR_Probe(ir_obj_addr , temps[ir_obj_id]))
+  {
+    last_ir_obj_good_time = now_time;
+    ir_obj_ever_good = true;
+  }
+  read_IR_Probe(ir_body_addr , temps[ir_body_id]);
 }
 
 void pid_Update()
@@ -88,15 +91,18 @@ void pid_Update()
   unsigned long now_time = millis();
   thermisters_Update();
   ir_Update();
+  
+  bool ir_fresh = ir_obj_ever_good && (now_time - last_ir_obj_good_time) < ir_max_stale_age
 
   for (int i = 0; i < num_heaters; i++)
   {
+    bool input_ok = (control_sensors[i] != ir_obj_id) || ir_fresh;
     if (pids[i].Compute())
     {
       window_start_times[i] = now_time;
     }
 
-    if ((outputs[i]*window_size > (now_time - window_start_times[i])) && temps[limit_sensor[i]] < limit_max[i] && temps[limit_sensor[i]] > limit_min[i])
+    if ((outputs[i]*window_size > (now_time - window_start_times[i])) && temps[limit_sensor[i]] < limit_max[i] && temps[limit_sensor[i]] > limit_min[i] && input_ok)
     {
       digitalWrite(heater_pins[i] , HIGH);
       // Serial.println(outputs[0]);

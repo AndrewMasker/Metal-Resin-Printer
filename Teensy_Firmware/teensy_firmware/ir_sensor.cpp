@@ -1,4 +1,4 @@
-#include "heaters.h"
+#include "ir_sensor.h"
 #include "config.h"
 #include <Arduino.h>
 
@@ -17,7 +17,7 @@ static inline void scl_Release()
     pinMode(ir_scl_pin , INPUT);
 }
 
-static inline void sda_Release() 
+static inline void sda_Low() 
 {
     pinMode(ir_scl_pin , OUTPUT);
 }
@@ -27,10 +27,10 @@ static inline void half_Bit()
     delayMicroseconds(10);
 }
 
-ir_Sensor_Init()
+void ir_Sensor_Init()
 {
-    digitalWrite(ir_sda_pin , LOW);
-    digitalWrite(ir_scl_pin , LOW);
+    digitalWriteFast(ir_sda_pin , LOW);
+    digitalWriteFast(ir_scl_pin , LOW);
     sda_Release();
     scl_Release();
 }
@@ -55,7 +55,7 @@ static bool i2c_Start()
     half_Bit();
     if (!scl_High()) // Set scl high on our end and wait till it is released from low on the sensor end
     {
-        return false // If the wait returned false it means something is weird so we must return false
+        return false; // If the wait returned false it means something is weird so we must return false
     }
     half_Bit();
     sda_Low(); // Set sda low while scl is high to indicate a start
@@ -78,7 +78,7 @@ static void i2c_Stop()
 static bool i2c_Write(uint8_t b)
 {
     // Send the byte
-    for (int i == 7; i >= 0; i--)
+    for (int i = 7; i >= 0; i--)
     {
         if (b & (1 << i)) // Check if the current bit is a 1 or zero
         {
@@ -88,6 +88,7 @@ static bool i2c_Write(uint8_t b)
         {
             sda_Low(); // Send low bit
         }
+        half_Bit();
         if (!scl_High()) return false; // Set the scl high and if the sensor never let go of it being low then return false
         half_Bit();
         scl_Low(); // Set scl low so we can send the next byte
@@ -96,6 +97,7 @@ static bool i2c_Write(uint8_t b)
     // Read the acknowledge bit
     sda_Release(); 
     half_Bit();
+    if (!scl_High()) return false;
     bool ack = !digitalRead(ir_sda_pin); // If the sda pin is low that means out reply was acknowledged
     half_Bit();
     scl_Low();
@@ -146,7 +148,7 @@ bool read_IR_Probe(uint8_t reg , float &out)
 {
     const uint8_t write = ir_address << 1;
     const uint8_t read = write | 1;
-    uint8_t lsb , msb , pec
+    uint8_t lsb , msb , pec;
 
     bool ok = i2c_Start() &&
               i2c_Write(write) &&
@@ -161,7 +163,7 @@ bool read_IR_Probe(uint8_t reg , float &out)
     
     const uint8_t bytes[5] = {write , reg , read , lsb , msb};
     if (crc8(bytes , 5) != pec) return false;
-    uint16_t raw = ((unit16_t)msb << 8) | lsb ;
+    uint16_t raw = ((uint16_t)msb << 8) | lsb ;
     if (raw & 0x8000) return false;
 
     out = (raw * 0.02f) - 273.15f ;
