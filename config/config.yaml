@@ -45,3 +45,4 @@ display:
     height: 80
     x: 160
     y: 160
+    refresh_period: 2

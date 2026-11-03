@@ -1,4 +1,5 @@
 from lmm_printer.core.types import Result , Move_Method , NUM_AXES , AXIS_NAMES , Session_Status , PROBE_NAMES
+import time
 
 class Print_Session:
     """Holds functionality for running a print session.
@@ -20,6 +21,9 @@ class Print_Session:
         self.config = config
         self._add_State_File_To_Config()
         self.should_go = True
+
+        self.last_refresh = 0
+        self.refresh_period = self.config["display"]["status"]["refresh_period"]
 
         self.printer = None
         self.file = None
@@ -249,6 +253,16 @@ class Print_Session:
             self._make_safe()
             self.ui.stop_Poll_During_Print()
 
+    def _idle_Refresh(self):
+        if self.printer is None: return
+        now = time.monotonic()
+        if (now - self.last_refresh) < self.refresh_period: return
+        self.last_refresh = now
+        try:
+            self.printer.return_Current_State()
+        except Exception:
+            pass
+
     def go(self):
         """
         Starts accepting commands and proceeds until the should_go flag is set to False.
@@ -259,6 +273,7 @@ class Print_Session:
         while self.should_go:
             try:
                 self.ui.get_Do_Command(self)
+                self._idle_Refresh()
             except Exception as e:
                 self.notify(Result.error(message=f"Command failed with error {e}."))
 
