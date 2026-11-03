@@ -65,11 +65,6 @@ static void thermisters_Update()
   }
 }
 
-read_IR_Probe() 
-{
-  
-}
-
 static void ir_Update()
 {
   unsigned long now_time = millis();
@@ -79,7 +74,9 @@ static void ir_Update()
   }
   else
   {
-    temps[ir_sensor_id] = read_IR_Probe();
+    static bool obj_good = read_IR_Probe(ir_obj_addr , temps[ir_obj_id]);
+    static bool body_good = read_IR_Probe(ir_body_addr , temps[ir_body_id]);
+    if ( (!obj_good) || (!body_good) ) return ;
     last_ir_good_time = now_time;
   }
   
@@ -89,7 +86,8 @@ static void ir_Update()
 void pid_Update()
 {
   unsigned long now_time = millis();
-  probes_Update();
+  thermisters_Update();
+  ir_Update();
 
   for (int i = 0; i < num_heaters; i++)
   {
@@ -98,7 +96,7 @@ void pid_Update()
       window_start_times[i] = now_time;
     }
 
-    if ((outputs[i]*window_size > (now_time - window_start_times[i])) && temps[i] < max_temps[i] && temps[i] > min_temps[i])
+    if ((outputs[i]*window_size > (now_time - window_start_times[i])) && temps[limit_sensor[i]] < limit_max[i] && temps[limit_sensor[i]] > limit_min[i])
     {
       digitalWrite(heater_pins[i] , HIGH);
       // Serial.println(outputs[0]);

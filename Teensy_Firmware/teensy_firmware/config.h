@@ -44,10 +44,11 @@ constexpr float backoff_dist[3] = {4 , -4 , 4};
 // Reservoir Wall: 0 , Recoater: 1
 constexpr int num_heaters = 2;
 constexpr int num_thermisters = 3;
-constexpr int ir_sensor_id = 3;
-constexpr int num_probes = num_thermisters + 1; // Reservoir wall: 0 , Recoater Heater: 1 , Recoater front: 2 , Slurry Thermometer: 3
+constexpr int ir_obj_id = 3;
+constexpr int ir_body_id = 4;
+constexpr int num_probes = num_thermisters + 2; // Reservoir wall: 0 , Recoater Heater: 1 , Recoater front: 2 , IR Object: 3 , IR Body: 4
 
-constexpr int control_sensors[num_heaters] = {ir_sensor_id , 1};
+constexpr int control_sensors[num_heaters] = {ir_obj_id , 1};
 constexpr int limit_sensor[num_heaters] = {0 , 1}; 
 constexpr int limit_max[num_heaters] = {80 , 100};
 constexpr int limit_min = {0 , 0};
