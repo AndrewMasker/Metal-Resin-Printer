@@ -10,12 +10,12 @@ projector:
   num_pixels_y: 1440
 
 slurry:
-  temp: 50
+  temp: 60
   valid_diff: 5
 
 recoater:
-  temp: 40
-  valid_diff: 5
+  temp: 50
+  valid_diff: 10
   vertical_pullback: 2
   clear_pos: 140
 
