@@ -51,7 +51,7 @@ constexpr int num_probes = num_thermisters + 2; // Reservoir wall: 0 , Recoater 
 
 constexpr int control_sensors[num_heaters] = {ir_obj_id , 1};
 constexpr int limit_sensor[num_heaters] = {0 , 1}; 
-constexpr int limit_max[num_heaters] = {80 , 100};
+constexpr int limit_max[num_heaters] = {100 , 100};
 constexpr int limit_min[num_heaters] = {0 , 0};
 
 constexpr int ir_sda_pin = 7;
