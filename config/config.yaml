@@ -10,7 +10,7 @@ projector:
   num_pixels_y: 1440
 
 slurry:
-  temp: 70
+  temp: 80
   valid_diff: 10
 
 recoater:
